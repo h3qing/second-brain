@@ -1,0 +1,191 @@
+import { listFiles, getFileContent } from "./github";
+import { parseFrontmatter, extractTitle } from "./parser";
+import { remark } from "remark";
+import remarkHtml from "remark-html";
+import remarkGfm from "remark-gfm";
+
+function slugify(name: string): string {
+  return name.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
+}
+
+export interface FileEntry {
+  path: string;
+  filename: string;
+  slug: string;
+}
+
+// Build a file index for wikilink resolution
+export async function buildFileIndex(): Promise<Map<string, FileEntry>> {
+  const conceptPaths = await listFiles("30 Concept", "force-cache");
+  const ideaPaths = await listFiles("20 Ideas", "force-cache");
+
+  const index = new Map<string, FileEntry>();
+
+  for (const path of conceptPaths) {
+    const filename = path.split("/").pop()?.replace(".md", "") || "";
+    const slug = slugify(filename);
+    index.set(filename.toLowerCase(), {
+      path,
+      filename,
+      slug,
+    });
+  }
+
+  for (const path of ideaPaths) {
+    const filename = path.split("/").pop()?.replace(".md", "") || "";
+    const slug = slugify(filename);
+    // Concepts take priority in disambiguation
+    if (!index.has(filename.toLowerCase())) {
+      index.set(filename.toLowerCase(), {
+        path,
+        filename,
+        slug,
+      });
+    }
+  }
+
+  return index;
+}
+
+// Resolve wikilinks in markdown to HTML links
+function resolveWikilinks(
+  markdown: string,
+  fileIndex: Map<string, FileEntry>
+): string {
+  return markdown.replace(
+    /\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/g,
+    (_match, target, alias) => {
+      const display = alias || target;
+      const lookupName = (target.split("/").pop() || target).trim();
+      const entry = fileIndex.get(lookupName.toLowerCase());
+
+      if (!entry) return display;
+
+      // Determine URL based on path
+      if (entry.path.startsWith("30 Concept/")) {
+        return `<a href="/concepts/${entry.slug}" class="wikilink">${display}</a>`;
+      }
+      if (entry.path.startsWith("20 Ideas/")) {
+        return `<a href="/ideas/${entry.slug}" class="wikilink">${display}</a>`;
+      }
+
+      return display;
+    }
+  );
+}
+
+// Render markdown to HTML with wikilink resolution
+export async function renderMarkdown(
+  content: string,
+  fileIndex: Map<string, FileEntry>
+): Promise<string> {
+  const withLinks = resolveWikilinks(content, fileIndex);
+
+  const result = await remark().use(remarkGfm).use(remarkHtml, { sanitize: false }).process(withLinks);
+
+  return result.toString();
+}
+
+// Find a concept file by slug
+export async function findConceptBySlug(slug: string): Promise<{
+  path: string;
+  content: string;
+  frontmatter: Record<string, unknown>;
+  title: string;
+  bodyHtml: string;
+} | null> {
+  const conceptPaths = await listFiles("30 Concept", "force-cache");
+  const fileIndex = await buildFileIndex();
+
+  for (const path of conceptPaths) {
+    const filename = path.split("/").pop()?.replace(".md", "") || "";
+    if (slugify(filename) !== slug) continue;
+
+    const file = await getFileContent(path, "force-cache");
+    if (!file) continue;
+
+    const { frontmatter, content } = parseFrontmatter(file.content);
+
+    // Only show reviewed content publicly
+    if (
+      frontmatter.review_status &&
+      frontmatter.review_status !== "reviewed"
+    ) {
+      return null;
+    }
+
+    const title = extractTitle(content, path);
+    const bodyHtml = await renderMarkdown(content, fileIndex);
+
+    return { path, content, frontmatter, title, bodyHtml };
+  }
+
+  return null;
+}
+
+// Find an idea file by slug
+export async function findIdeaBySlug(slug: string): Promise<{
+  path: string;
+  content: string;
+  frontmatter: Record<string, unknown>;
+  title: string;
+  bodyHtml: string;
+} | null> {
+  const ideaPaths = await listFiles("20 Ideas", "force-cache");
+  const fileIndex = await buildFileIndex();
+
+  for (const path of ideaPaths) {
+    const filename = path.split("/").pop()?.replace(".md", "") || "";
+    if (slugify(filename) !== slug) continue;
+
+    const file = await getFileContent(path, "force-cache");
+    if (!file) continue;
+
+    const { frontmatter, content } = parseFrontmatter(file.content);
+
+    if (frontmatter.review_status !== "reviewed") {
+      return null;
+    }
+
+    const title = extractTitle(content, path);
+    const bodyHtml = await renderMarkdown(content, fileIndex);
+
+    return { path, content, frontmatter, title, bodyHtml };
+  }
+
+  return null;
+}
+
+// Parse log.md into pipeline feed entries
+export async function parsePipelineFeed(): Promise<
+  Array<{
+    date: string;
+    text: string;
+    tags: string[];
+  }>
+> {
+  const file = await getFileContent("00 Meta/log.md", "force-cache");
+  if (!file) return [];
+
+  const lines = file.content.split("\n").filter((l) => l.startsWith("- "));
+  const entries: Array<{ date: string; text: string; tags: string[] }> = [];
+
+  for (const line of lines) {
+    const dateMatch = line.match(/^-\s*\*?\*?(\d{4}-\d{2}-\d{2})\*?\*?\s*/);
+    if (!dateMatch) continue;
+
+    const date = dateMatch[1];
+    const text = line.slice(dateMatch[0].length).replace(/^\s*[-—]\s*/, "");
+
+    const tags: string[] = [];
+    if (text.toLowerCase().includes("extract")) tags.push("extracted");
+    if (text.toLowerCase().includes("synth")) tags.push("synthesized");
+    if (text.toLowerCase().includes("review")) tags.push("reviewed");
+    if (text.toLowerCase().includes("ingest")) tags.push("ingested");
+    if (text.toLowerCase().includes("concept")) tags.push("new concept");
+
+    entries.push({ date, text, tags });
+  }
+
+  return entries.reverse().slice(0, 20);
+}

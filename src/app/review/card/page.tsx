@@ -1,0 +1,214 @@
+import { redirect } from "next/navigation";
+import Link from "next/link";
+import { verifySession } from "@/lib/auth";
+import { listFiles, getFileContent } from "@/lib/github";
+import { parseFrontmatter, parseReviewItem } from "@/lib/parser";
+import { reviewAction } from "@/app/review/action";
+
+async function getUnreviewedPaths(): Promise<string[]> {
+  const dirs = ["20 Ideas", "30 Concept"];
+  const allPaths: string[] = [];
+
+  for (const dir of dirs) {
+    const paths = await listFiles(dir);
+    allPaths.push(...paths);
+  }
+
+  const unreviewedPaths: string[] = [];
+  for (const path of allPaths) {
+    const file = await getFileContent(path);
+    if (!file) continue;
+    const { frontmatter } = parseFrontmatter(file.content);
+    if (frontmatter.review_status === "unreviewed") {
+      unreviewedPaths.push(path);
+    }
+  }
+  return unreviewedPaths;
+}
+
+export default async function CardReview({
+  searchParams,
+}: {
+  searchParams: Promise<{ path?: string }>;
+}) {
+  const isLoggedIn = await verifySession();
+  if (!isLoggedIn) redirect("/login");
+
+  const params = await searchParams;
+  const currentPath = params.path;
+
+  if (!currentPath) redirect("/review");
+
+  const file = await getFileContent(currentPath);
+  if (!file) redirect("/review");
+
+  const item = await parseReviewItem(currentPath, file.sha, file.content);
+
+  const unreviewedPaths = await getUnreviewedPaths();
+  const currentIndex = unreviewedPaths.indexOf(currentPath);
+  const prevPath =
+    currentIndex > 0 ? unreviewedPaths[currentIndex - 1] : null;
+  const nextPath =
+    currentIndex < unreviewedPaths.length - 1
+      ? unreviewedPaths[currentIndex + 1]
+      : null;
+  const nextForAction = nextPath
+    ? `/review/card?path=${encodeURIComponent(nextPath)}`
+    : "/review";
+  const position =
+    currentIndex >= 0
+      ? `${currentIndex + 1} of ${unreviewedPaths.length}`
+      : "";
+
+  const pathParts = currentPath.split("/");
+  const folder =
+    pathParts.length >= 3 ? pathParts.slice(0, -1).join(" / ") : pathParts[0];
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <Link
+          href="/review"
+          className="text-sm text-muted hover:text-foreground transition-colors"
+        >
+          &larr; Queue
+        </Link>
+        {position && (
+          <span className="text-sm text-muted tabular-nums font-mono">
+            {position}
+          </span>
+        )}
+      </div>
+
+      {/* Card */}
+      <div className="border border-border rounded-lg p-6 space-y-5">
+        <div className="text-xs text-muted tracking-wide">{folder}</div>
+
+        <h1 className="text-2xl font-heading tracking-tight leading-tight">
+          {item.title}
+        </h1>
+
+        {/* Content body */}
+        <div className="text-foreground leading-relaxed space-y-3">
+          {item.content
+            .replace(/^#\s+.+$/m, "")
+            .replace(/##\s*Source\s*Highlights?[\s\S]*?(?=\n##|$)/i, "")
+            .replace(/##\s*Related\s*Concepts?[\s\S]*?(?=\n##|$)/i, "")
+            .trim()
+            .split("\n\n")
+            .filter(Boolean)
+            .map((paragraph, i) => {
+              if (paragraph.startsWith("## ")) {
+                return (
+                  <h2
+                    key={i}
+                    className="label pt-2"
+                  >
+                    {paragraph.replace(/^##\s*/, "")}
+                  </h2>
+                );
+              }
+              return (
+                <p key={i} className="text-sm leading-relaxed">
+                  {paragraph.replace(/^[-*]\s*/, "")}
+                </p>
+              );
+            })}
+        </div>
+
+        {/* Source Highlights */}
+        {item.sourceHighlights.length > 0 && (
+          <div className="border-t border-border pt-5 space-y-3">
+            <h2 className="label">Original Highlights</h2>
+            {item.sourceHighlights.map((h, i) => (
+              <blockquote
+                key={i}
+                className="border-l-3 border-accent pl-4 py-1 bg-highlight"
+              >
+                <p className="text-sm italic leading-relaxed">{h.text}</p>
+                {h.location && (
+                  <p className="text-xs text-muted mt-1 font-mono">
+                    {h.location}
+                  </p>
+                )}
+              </blockquote>
+            ))}
+          </div>
+        )}
+
+        {/* Related Concepts */}
+        {item.relatedConcepts.length > 0 && (
+          <div className="flex flex-wrap gap-2 pt-2">
+            {item.relatedConcepts.map((concept) => (
+              <span
+                key={concept}
+                className="text-xs px-2 py-1 border border-border text-muted rounded-sm"
+              >
+                {concept}
+              </span>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Action Buttons */}
+      <div className="flex gap-3">
+        <form action={reviewAction} className="flex-1">
+          <input type="hidden" name="path" value={currentPath} />
+          <input type="hidden" name="action" value="approve" />
+          <input type="hidden" name="returnTo" value={nextForAction} />
+          <button type="submit" className="btn btn-approve w-full text-lg">
+            Approve
+          </button>
+        </form>
+
+        <form action={reviewAction} className="flex-1">
+          <input type="hidden" name="path" value={currentPath} />
+          <input type="hidden" name="action" value="contest" />
+          <input type="hidden" name="returnTo" value={nextForAction} />
+          <button type="submit" className="btn btn-contest w-full text-lg">
+            Contest
+          </button>
+        </form>
+      </div>
+
+      {nextPath && (
+        <div className="text-center">
+          <Link
+            href={`/review/card?path=${encodeURIComponent(nextPath)}`}
+            className="text-sm text-muted hover:text-foreground transition-colors"
+          >
+            Skip for now &rarr;
+          </Link>
+        </div>
+      )}
+
+      {/* Navigation */}
+      <div className="flex justify-between pt-4 border-t border-border">
+        {prevPath ? (
+          <Link
+            href={`/review/card?path=${encodeURIComponent(prevPath)}`}
+            className="btn btn-nav"
+          >
+            &larr; Prev
+          </Link>
+        ) : (
+          <div />
+        )}
+        {nextPath ? (
+          <Link
+            href={`/review/card?path=${encodeURIComponent(nextPath)}`}
+            className="btn btn-nav"
+          >
+            Next &rarr;
+          </Link>
+        ) : (
+          <Link href="/review" className="btn btn-nav">
+            Done
+          </Link>
+        )}
+      </div>
+    </div>
+  );
+}

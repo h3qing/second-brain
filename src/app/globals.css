@@ -1,26 +1,182 @@
 @import "tailwindcss";
 
+/* Ink & Parchment theme — warm editorial aesthetic */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #faf8f5;
+  --foreground: #1a1a1a;
+  --muted: #8a7e6e;
+  --border: #d4c9b8;
+  --card: #f5f0e8;
+  --accent: #8b6914;
+  --highlight: #f5f0e8;
+  --success: #2d6a2e;
+  --danger: #8b3a3a;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-muted: var(--muted);
+  --color-border: var(--border);
+  --color-card: var(--card);
+  --color-accent: var(--accent);
+  --color-highlight: var(--highlight);
+  --color-success: var(--success);
+  --color-danger: var(--danger);
+  --font-body: var(--font-body);
+  --font-heading: var(--font-heading);
+  --font-mono: ui-monospace, "Cascadia Code", "Source Code Pro", monospace;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --background: #1a1812;
+    --foreground: #e8e0d4;
+    --muted: #a39882;
+    --border: #3d3628;
+    --card: #242018;
+    --accent: #c49a2e;
+    --highlight: #2a2418;
+    --success: #4a9e4b;
+    --danger: #c45454;
   }
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-body), Georgia, serif;
+  line-height: 1.6;
+}
+
+.font-heading {
+  font-family: var(--font-heading), "Cormorant Garamond", Georgia, serif;
+}
+
+.label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+/* Kindle-friendly buttons — 52px+ touch targets */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 52px;
+  min-width: 52px;
+  padding: 14px 24px;
+  border-radius: 4px;
+  font-weight: 600;
+  font-size: 16px;
+  cursor: pointer;
+  border: 2px solid var(--border);
+  transition: all 0.15s ease;
+  font-family: var(--font-body), Georgia, serif;
+}
+
+.btn-approve {
+  background: var(--success);
+  color: #ffffff;
+  border-color: var(--success);
+}
+
+.btn-approve:hover {
+  opacity: 0.85;
+}
+
+.btn-contest {
+  background: transparent;
+  color: var(--danger);
+  border-color: var(--danger);
+}
+
+.btn-contest:hover {
+  background: var(--danger);
+  color: #ffffff;
+}
+
+.btn-nav {
+  background: transparent;
+  color: var(--foreground);
+  border-color: var(--border);
+  min-width: 80px;
+  min-height: 44px;
+  font-size: 14px;
+}
+
+.btn-nav:hover {
+  background: var(--card);
+}
+
+.bg-highlight {
+  background: var(--highlight);
+  border-radius: 2px;
+  padding: 8px 0;
+}
+
+/* Prose styling for rendered markdown */
+.prose-warm h1,
+.prose-warm h2,
+.prose-warm h3 {
+  font-family: var(--font-heading), "Cormorant Garamond", Georgia, serif;
+  font-weight: 600;
+  color: var(--foreground);
+  margin-top: 1.5em;
+  margin-bottom: 0.5em;
+}
+
+.prose-warm h1 { font-size: 1.5rem; }
+.prose-warm h2 { font-size: 1.2rem; }
+.prose-warm h3 { font-size: 1rem; }
+
+.prose-warm p {
+  font-size: 0.95rem;
+  line-height: 1.7;
+  margin-bottom: 1em;
+}
+
+.prose-warm ul,
+.prose-warm ol {
+  padding-left: 1.5em;
+  margin-bottom: 1em;
+}
+
+.prose-warm li {
+  font-size: 0.95rem;
+  line-height: 1.6;
+  margin-bottom: 0.25em;
+}
+
+.prose-warm blockquote {
+  border-left: 3px solid var(--accent);
+  padding-left: 1em;
+  margin: 1em 0;
+  background: var(--highlight);
+  padding: 0.75em 1em;
+  border-radius: 2px;
+  font-style: italic;
+  color: var(--muted);
+}
+
+.prose-warm a.wikilink {
+  color: var(--accent);
+  text-decoration: none;
+  border-bottom: 1px solid var(--border);
+  transition: border-color 0.15s;
+}
+
+.prose-warm a.wikilink:hover {
+  border-color: var(--accent);
+}
+
+.prose-warm code {
+  font-family: var(--font-mono);
+  font-size: 0.85em;
+  background: var(--card);
+  padding: 0.15em 0.35em;
+  border-radius: 3px;
 }
