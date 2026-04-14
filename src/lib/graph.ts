@@ -46,20 +46,12 @@ export async function buildGraphData(): Promise<GraphData> {
   const tagCounts: Record<string, number> = {};
   const fileIndex = new Map<string, string>(); // filename -> node id
 
-  // Process concepts
+  // Process concepts — always public (structural wiki pages, not AI-generated)
   for (const path of conceptPaths) {
     const file = await getFileContent(path, "force-cache");
     if (!file) continue;
 
     const { frontmatter, content } = parseFrontmatter(file.content);
-
-    // Only show reviewed content publicly
-    if (
-      frontmatter.review_status &&
-      frontmatter.review_status !== "reviewed"
-    ) {
-      continue;
-    }
 
     const title = extractTitle(content, path);
     const filename = path.split("/").pop()?.replace(".md", "") || "";

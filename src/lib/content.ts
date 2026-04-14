@@ -106,14 +106,7 @@ export async function findConceptBySlug(slug: string): Promise<{
 
     const { frontmatter, content } = parseFrontmatter(file.content);
 
-    // Only show reviewed content publicly
-    if (
-      frontmatter.review_status &&
-      frontmatter.review_status !== "reviewed"
-    ) {
-      return null;
-    }
-
+    // Concepts are always public (structural wiki pages)
     const title = extractTitle(content, path);
     const bodyHtml = await renderMarkdown(content, fileIndex);
 
