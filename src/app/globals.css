@@ -1,16 +1,18 @@
 @import "tailwindcss";
 
-/* Ink & Parchment theme — warm editorial aesthetic */
+/* Ink & Parchment — matched to heqinghuang.com */
 :root {
-  --background: #faf8f5;
+  --background: #ffffff;
   --foreground: #1a1a1a;
-  --muted: #8a7e6e;
-  --border: #d4c9b8;
-  --card: #f5f0e8;
-  --accent: #8b6914;
-  --highlight: #f5f0e8;
+  --muted: #737373;
+  --border: #d4d4d4;
+  --card: #fafafa;
+  --accent: #b8845a;
+  --accent-hover: #a6744c;
+  --highlight: #f5f5f5;
   --success: #2d6a2e;
   --danger: #8b3a3a;
+  --ink: #000000;
 }
 
 @theme inline {
@@ -30,15 +32,17 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #1a1812;
-    --foreground: #e8e0d4;
-    --muted: #a39882;
-    --border: #3d3628;
-    --card: #242018;
-    --accent: #c49a2e;
-    --highlight: #2a2418;
+    --background: #000000;
+    --foreground: #e5e5e5;
+    --muted: #a3a3a3;
+    --border: #404040;
+    --card: #171717;
+    --accent: #c49a6c;
+    --accent-hover: #d4aa7c;
+    --highlight: #1a1a1a;
     --success: #4a9e4b;
     --danger: #c45454;
+    --ink: #ffffff;
   }
 }
 
@@ -112,27 +116,41 @@ body {
   background: var(--card);
 }
 
-/* Pipeline architecture diagram */
+/* Pipeline architecture diagram — breaks out of max-w-xl */
 .pipeline-diagram {
   position: relative;
-  width: 100%;
-  margin: 0.5rem 0;
-  padding: 1.5rem;
+  width: calc(100% + 4rem);
+  margin-left: -2rem;
+  margin-right: -2rem;
+  padding: 1rem;
   border: 1px solid var(--border);
   border-radius: 4px;
   background: var(--card);
   overflow-x: auto;
 }
 
-@media (prefers-color-scheme: dark) {
-  .pipeline-diagram svg rect[fill="#f5f0e8"] {
-    fill: #242018;
+@media (min-width: 768px) {
+  .pipeline-diagram {
+    width: calc(100% + 8rem);
+    margin-left: -4rem;
+    margin-right: -4rem;
+    padding: 1.5rem 2rem;
   }
-  .pipeline-diagram svg rect[fill="#faf8f5"] {
-    fill: #1a1812;
+}
+
+@media (prefers-color-scheme: dark) {
+  .pipeline-diagram svg rect[fill="#f5f5f5"] {
+    fill: #1a1a1a;
+  }
+  .pipeline-diagram svg rect[fill="#ffffff"] {
+    fill: #0a0a0a;
   }
   .pipeline-diagram svg text[fill="#1a1a1a"] {
-    fill: #e8e0d4;
+    fill: #e5e5e5;
+  }
+  .pipeline-diagram svg line,
+  .pipeline-diagram svg polygon {
+    filter: brightness(1.5);
   }
 }
 
