@@ -112,6 +112,30 @@ body {
   background: var(--card);
 }
 
+/* Pipeline architecture diagram */
+.pipeline-diagram {
+  position: relative;
+  width: 100%;
+  margin: 0.5rem 0;
+  padding: 1.5rem;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--card);
+  overflow-x: auto;
+}
+
+@media (prefers-color-scheme: dark) {
+  .pipeline-diagram svg rect[fill="#f5f0e8"] {
+    fill: #242018;
+  }
+  .pipeline-diagram svg rect[fill="#faf8f5"] {
+    fill: #1a1812;
+  }
+  .pipeline-diagram svg text[fill="#1a1a1a"] {
+    fill: #e8e0d4;
+  }
+}
+
 .bg-highlight {
   background: var(--highlight);
   border-radius: 2px;

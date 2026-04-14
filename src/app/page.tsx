@@ -2,6 +2,7 @@ import Link from "next/link";
 import { buildGraphData } from "@/lib/graph";
 import { parsePipelineFeed } from "@/lib/content";
 import GraphSection from "./components/GraphSection";
+import PipelineDiagram from "./components/PipelineDiagram";
 
 export const revalidate = 900; // ISR: 15 minutes
 
@@ -72,6 +73,12 @@ export default async function Home() {
           </div>
         </div>
       )}
+
+      {/* System Architecture */}
+      <div>
+        <p className="label mb-3">How It Works</p>
+        <PipelineDiagram />
+      </div>
 
       {/* Footer links */}
       <div className="border-t border-border pt-4 text-sm text-muted space-x-4">
