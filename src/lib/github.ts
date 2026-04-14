@@ -16,11 +16,15 @@ export interface RepoFile {
   content: string;
 }
 
+function encodePath(path: string): string {
+  return path.split("/").map(encodeURIComponent).join("/");
+}
+
 export async function getFileContent(
   path: string,
   cache: RequestCache = "no-store"
 ): Promise<RepoFile | null> {
-  const url = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${encodeURIComponent(path)}?ref=${BRANCH}`;
+  const url = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${encodePath(path)}?ref=${BRANCH}`;
   const res = await fetch(url, { headers: headers(), cache });
   if (!res.ok) return null;
   const data = await res.json();
@@ -32,7 +36,7 @@ export async function listFiles(
   dirPath: string,
   cache: RequestCache = "no-store"
 ): Promise<string[]> {
-  const url = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${encodeURIComponent(dirPath)}?ref=${BRANCH}`;
+  const url = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${encodePath(dirPath)}?ref=${BRANCH}`;
   const res = await fetch(url, { headers: headers(), cache });
   if (!res.ok) return [];
   const data = await res.json();
@@ -56,7 +60,7 @@ export async function updateFile(
   sha: string,
   message: string
 ): Promise<boolean> {
-  const url = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${encodeURIComponent(path)}`;
+  const url = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${encodePath(path)}`;
   const res = await fetch(url, {
     method: "PUT",
     headers: headers(),
