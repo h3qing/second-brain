@@ -1,192 +1,221 @@
+const Arrow = () => (
+  <div style={{ display: "flex", justifyContent: "center", padding: "0.25rem 0" }}>
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none"
+      style={{ color: "var(--ink-border)" }}>
+      <path d="M8 2v10M4 9l4 4 4-4"
+        stroke="currentColor" strokeWidth="1.5"
+        strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  </div>
+);
+
+const Tag = ({ children }: { children: string }) => (
+  <span style={{
+    fontFamily: "var(--font-mono)",
+    fontSize: "0.65rem",
+    letterSpacing: "0.05em",
+    textTransform: "uppercase" as const,
+    color: "var(--ink-muted)",
+    padding: "0.15rem 0.4rem",
+    border: "1px solid var(--ink-border)",
+    borderRadius: "3px",
+  }}>
+    {children}
+  </span>
+);
+
 export default function PipelineDiagram() {
-  // Colors matched to heqinghuang.com Ink & Parchment theme
-  const c = {
-    text: "#1a1a1a",
-    muted: "#737373",
-    border: "#d4d4d4",
-    accent: "#b8845a",
-    bg: "#f5f5f5",
-    paper: "#ffffff",
-    label: "#999",
-    ghost: "#b0b0b0",
+  const box = {
+    border: "1px solid var(--ink-border)",
+    borderRadius: "8px",
+    padding: "1rem 1.25rem",
+    background: "var(--ink-paper)",
+  };
+
+  const accentBox = {
+    ...box,
+    borderColor: "var(--ink-accent)",
+    background: "color-mix(in srgb, var(--ink-accent) 4%, var(--ink-paper))",
+  };
+
+  const title = {
+    fontFamily: "var(--font-heading), Georgia, serif",
+    fontSize: "1rem",
+    fontWeight: 500 as const,
+    color: "var(--ink-ink)",
+    marginBottom: "0.35rem",
+    letterSpacing: "-0.01em",
+  };
+
+  const desc = {
+    fontSize: "0.8rem",
+    fontWeight: 400 as const,
+    color: "var(--ink-muted)",
+    fontStyle: "italic" as const,
+    lineHeight: 1.5,
   };
 
   return (
-    <div className="pipeline-diagram">
-      <svg
-        viewBox="0 0 800 420"
-        preserveAspectRatio="xMidYMid meet"
-        style={{ width: "100%", height: "auto", display: "block" }}
-        role="img"
-        aria-label="Second Brain pipeline architecture"
-      >
-        {/* === COLUMN 1: SOURCES === */}
-        <text x="70" y="24" fill={c.label} fontSize="10" fontFamily="monospace" letterSpacing="0.12em" textAnchor="middle">
-          SOURCES
-        </text>
+    <div style={{
+      margin: "2rem 0",
+      padding: "1.5rem",
+      border: "1px solid var(--ink-border)",
+      borderRadius: "8px",
+      background: "var(--ink-paper)",
+    }}>
+      <div style={{
+        fontFamily: "var(--font-heading), Georgia, serif",
+        fontSize: "1.1rem",
+        fontWeight: 400,
+        color: "var(--ink-muted)",
+        marginBottom: "1.25rem",
+        letterSpacing: "-0.01em",
+      }}>
+        How Knowledge Moves
+      </div>
 
-        <rect x="10" y="38" width="120" height="38" rx="2" stroke={c.border} fill={c.bg} />
-        <text x="70" y="62" fill={c.text} fontSize="12" fontFamily="monospace" textAnchor="middle">
-          Kindle Notes
-        </text>
+      {/* Layer 1: Sources */}
+      <div style={box}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
+          <div style={title}>10 Notes/</div>
+          <Tag>immutable</Tag>
+        </div>
+        <div style={desc}>
+          Raw sources. Kindle highlights, articles, podcasts, videos. Never modified after capture.
+          This is the ground truth.
+        </div>
+        <div style={{
+          display: "flex", flexWrap: "wrap", gap: "0.4rem",
+          marginTop: "0.6rem",
+        }}>
+          <Tag>kindle notes</Tag>
+          <Tag>articles</Tag>
+          <Tag>podcasts</Tag>
+          <Tag>videos</Tag>
+          <Tag>personal</Tag>
+        </div>
+      </div>
 
-        <rect x="10" y="84" width="120" height="38" rx="2" stroke={c.border} fill={c.bg} />
-        <text x="70" y="108" fill={c.text} fontSize="12" fontFamily="monospace" textAnchor="middle">
-          Articles
-        </text>
+      <Arrow />
+      <div style={{ textAlign: "center", fontSize: "0.7rem", color: "var(--ink-muted)", fontFamily: "var(--font-mono)", letterSpacing: "0.05em", margin: "-0.15rem 0 0.1rem" }}>
+        CLAUDE CODE EXTRACTS
+      </div>
+      <Arrow />
 
-        <rect x="10" y="130" width="120" height="38" rx="2" stroke={c.border} fill={c.bg} />
-        <text x="70" y="154" fill={c.text} fontSize="12" fontFamily="monospace" textAnchor="middle">
-          Podcasts
-        </text>
+      {/* Layer 2: Ideas */}
+      <div style={box}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
+          <div style={title}>20 Ideas/</div>
+          <Tag>ai-generated</Tag>
+        </div>
+        <div style={desc}>
+          Atomic ideas extracted per source. Each idea is one insight, one file. Links back to the
+          original highlight. This is where AI does the heavy lifting.
+        </div>
+        <div style={{
+          display: "flex", flexWrap: "wrap", gap: "0.4rem",
+          marginTop: "0.6rem",
+        }}>
+          <Tag>89 ideas</Tag>
+          <Tag>12 books</Tag>
+          <Tag>unreviewed</Tag>
+        </div>
+      </div>
 
-        <rect x="10" y="176" width="120" height="38" rx="2" stroke={c.border} fill={c.bg} />
-        <text x="70" y="200" fill={c.text} fontSize="12" fontFamily="monospace" textAnchor="middle">
-          Videos
-        </text>
+      <Arrow />
+      <div style={{ textAlign: "center", fontSize: "0.7rem", color: "var(--ink-muted)", fontFamily: "var(--font-mono)", letterSpacing: "0.05em", margin: "-0.15rem 0 0.1rem" }}>
+        SYNTHESIZE ACROSS SOURCES
+      </div>
+      <Arrow />
 
-        <rect x="10" y="222" width="120" height="38" rx="2" stroke={c.ghost} fill="none" strokeDasharray="5 3" />
-        <text x="70" y="246" fill={c.ghost} fontSize="12" fontFamily="monospace" textAnchor="middle">
-          + source
-        </text>
+      {/* Layer 3: Concepts */}
+      <div style={accentBox}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
+          <div style={{ ...title, color: "var(--ink-accent)" }}>30 Concept/</div>
+          <Tag>wiki layer</Tag>
+        </div>
+        <div style={desc}>
+          Cross-source concepts. A concept like &ldquo;negotiation&rdquo; pulls insights from books,
+          articles, conversations. Wikilinked. This is the knowledge graph.
+        </div>
+        <div style={{
+          display: "flex", flexWrap: "wrap", gap: "0.4rem",
+          marginTop: "0.6rem",
+        }}>
+          <Tag>42 concepts</Tag>
+          <Tag>cross-referenced</Tag>
+        </div>
+      </div>
 
-        {/* Arrows: Sources -> Vault */}
-        <line x1="130" y1="57" x2="175" y2="112" stroke={c.border} strokeWidth="1" />
-        <line x1="130" y1="103" x2="175" y2="118" stroke={c.border} strokeWidth="1" />
-        <line x1="130" y1="149" x2="175" y2="130" stroke={c.border} strokeWidth="1" />
-        <line x1="130" y1="195" x2="175" y2="145" stroke={c.border} strokeWidth="1" />
-        <polygon points="173,109 178,115 172,114" fill={c.border} />
+      <Arrow />
+      <div style={{ textAlign: "center", fontSize: "0.7rem", color: "var(--ink-accent)", fontFamily: "var(--font-mono)", letterSpacing: "0.05em", margin: "-0.15rem 0 0.1rem" }}>
+        HUMAN REVIEWS ON KINDLE
+      </div>
+      <Arrow />
 
-        {/* === COLUMN 2: OBSIDIAN VAULT === */}
-        <text x="275" y="24" fill={c.label} fontSize="10" fontFamily="monospace" letterSpacing="0.12em" textAnchor="middle">
-          VAULT (iCLOUD)
-        </text>
-
-        <rect x="175" y="38" width="200" height="132" rx="3" stroke={c.accent} fill={c.paper} strokeWidth="1.5" />
-        <text x="275" y="60" fill={c.accent} fontSize="12" fontFamily="monospace" textAnchor="middle" fontWeight="600">
-          Obsidian Vault
-        </text>
-
-        {/* Folder grid */}
-        <rect x="188" y="72" width="85" height="28" rx="2" stroke={c.border} fill={c.bg} />
-        <text x="230" y="90" fill={c.text} fontSize="10" fontFamily="monospace" textAnchor="middle">10 Notes/</text>
-
-        <rect x="280" y="72" width="85" height="28" rx="2" stroke={c.border} fill={c.bg} />
-        <text x="322" y="90" fill={c.text} fontSize="10" fontFamily="monospace" textAnchor="middle">20 Ideas/</text>
-
-        <rect x="188" y="106" width="85" height="28" rx="2" stroke={c.border} fill={c.bg} />
-        <text x="230" y="124" fill={c.text} fontSize="10" fontFamily="monospace" textAnchor="middle">30 Concept/</text>
-
-        <rect x="280" y="106" width="85" height="28" rx="2" stroke={c.border} fill={c.bg} />
-        <text x="322" y="124" fill={c.text} fontSize="10" fontFamily="monospace" textAnchor="middle">00 Meta/</text>
-
-        <rect x="188" y="142" width="177" height="20" rx="2" stroke={c.border} fill="none" strokeDasharray="4 3" />
-        <text x="275" y="156" fill={c.muted} fontSize="9" fontFamily="monospace" textAnchor="middle">
-          CLAUDE.md (schema)
-        </text>
-
-        {/* Arrow: Vault <-> Claude Code */}
-        <line x1="275" y1="170" x2="275" y2="206" stroke={c.accent} strokeWidth="1" />
-        <polygon points="272,204 278,204 275,210" fill={c.accent} />
-
-        <line x1="255" y1="232" x2="255" y2="170" stroke={c.accent} strokeWidth="1" strokeDasharray="4 3" />
-        <polygon points="252,172 258,172 255,166" fill={c.accent} />
-        <text x="244" y="198" fill={c.muted} fontSize="9" fontFamily="monospace" textAnchor="end">writes</text>
-
-        {/* === COLUMN 2 BOTTOM: CLAUDE CODE === */}
-        <text x="275" y="222" fill={c.label} fontSize="10" fontFamily="monospace" letterSpacing="0.12em" textAnchor="middle">
-          AI ENGINE
-        </text>
-
-        <rect x="190" y="232" width="170" height="52" rx="3" stroke={c.accent} fill={c.paper} strokeWidth="1.5" />
-        <text x="275" y="254" fill={c.accent} fontSize="12" fontFamily="monospace" textAnchor="middle" fontWeight="600">
-          Claude Code
-        </text>
-        <text x="275" y="272" fill={c.muted} fontSize="10" fontFamily="monospace" textAnchor="middle">
-          extract / synthesize / link
-        </text>
-
-        {/* === COLUMN 3: GITHUB === */}
-        <text x="530" y="24" fill={c.label} fontSize="10" fontFamily="monospace" letterSpacing="0.12em" textAnchor="middle">
-          SYNC
-        </text>
-
-        {/* Arrow: Vault -> GitHub */}
-        <line x1="375" y1="104" x2="445" y2="72" stroke={c.border} strokeWidth="1" />
-        <polygon points="443,69 449,73 442,75" fill={c.border} />
-        <text x="410" y="80" fill={c.muted} fontSize="9" fontFamily="monospace" textAnchor="middle">
-          auto-push
-        </text>
-
-        <rect x="450" y="38" width="160" height="56" rx="3" stroke={c.border} fill={c.bg} />
-        <text x="530" y="62" fill={c.text} fontSize="12" fontFamily="monospace" textAnchor="middle" fontWeight="600">
-          GitHub
-        </text>
-        <text x="530" y="80" fill={c.muted} fontSize="10" fontFamily="monospace" textAnchor="middle">
-          h3qing/obsidian
-        </text>
-
-        {/* Arrow: GitHub -> Web App */}
-        <line x1="530" y1="94" x2="530" y2="130" stroke={c.border} strokeWidth="1" />
-        <polygon points="527,128 533,128 530,134" fill={c.border} />
-        <text x="544" y="116" fill={c.muted} fontSize="9" fontFamily="monospace" textAnchor="start">API</text>
-
-        {/* === COLUMN 3 BOTTOM: WEB APP === */}
-        <text x="530" y="148" fill={c.label} fontSize="10" fontFamily="monospace" letterSpacing="0.12em" textAnchor="middle">
-          WEB APP
-        </text>
-
-        <rect x="430" y="156" width="200" height="128" rx="3" stroke={c.accent} fill={c.paper} strokeWidth="1.5" />
-        <text x="530" y="178" fill={c.accent} fontSize="11" fontFamily="monospace" textAnchor="middle" fontWeight="600">
-          secondbrain.
-        </text>
-        <text x="530" y="192" fill={c.accent} fontSize="11" fontFamily="monospace" textAnchor="middle" fontWeight="600">
-          heqinghuang.com
-        </text>
-
-        {/* Public */}
-        <rect x="442" y="202" width="88" height="40" rx="2" stroke={c.border} fill={c.bg} />
-        <text x="486" y="218" fill={c.muted} fontSize="9" fontFamily="monospace" textAnchor="middle">PUBLIC</text>
-        <text x="486" y="232" fill={c.text} fontSize="10" fontFamily="monospace" textAnchor="middle">Graph + Feed</text>
-
-        {/* Private */}
-        <rect x="538" y="202" width="82" height="40" rx="2" stroke={c.accent} fill={c.bg} />
-        <text x="579" y="218" fill={c.accent} fontSize="9" fontFamily="monospace" textAnchor="middle">PRIVATE</text>
-        <text x="579" y="232" fill={c.text} fontSize="10" fontFamily="monospace" textAnchor="middle">Review</text>
-
-        {/* Devices */}
-        <rect x="442" y="250" width="178" height="26" rx="2" stroke={c.border} fill="none" strokeDasharray="4 3" />
-        <text x="530" y="268" fill={c.ghost} fontSize="10" fontFamily="monospace" textAnchor="middle">
-          Kindle / Phone / Browser
-        </text>
-
-        {/* Arrow: Review -> GitHub (write-back loop) */}
-        <line x1="630" y1="222" x2="660" y2="222" stroke={c.accent} strokeWidth="1" />
-        <line x1="660" y1="222" x2="660" y2="66" stroke={c.accent} strokeWidth="1" />
-        <line x1="660" y1="66" x2="610" y2="66" stroke={c.accent} strokeWidth="1" />
-        <polygon points="612,63 612,69 606,66" fill={c.accent} />
-        <text x="670" y="150" fill={c.muted} fontSize="9" fontFamily="monospace" textAnchor="start" transform="rotate(90, 670, 120)">
-          review decisions
-        </text>
-
-        {/* === BOTTOM: HUMAN REVIEW LOOP === */}
-        <rect x="175" y="330" width="460" height="50" rx="3" stroke={c.accent} fill="none" strokeDasharray="5 3" />
-        <text x="405" y="352" fill={c.accent} fontSize="12" fontFamily="monospace" textAnchor="middle" fontWeight="600">
-          HUMAN REVIEW LOOP
-        </text>
-        <text x="405" y="370" fill={c.muted} fontSize="10" fontFamily="monospace" textAnchor="middle">
+      {/* Layer 4: This App */}
+      <div style={accentBox}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
+          <div style={{ ...title, color: "var(--ink-accent)" }}>secondbrain.heqinghuang.com</div>
+        </div>
+        <div style={desc}>
           AI extracts. Human reviews. Only approved content goes public.
-        </text>
+          The graph grows as you read more books and review more ideas.
+        </div>
+        <div style={{
+          display: "grid",
+          gridTemplateColumns: "1fr 1fr",
+          gap: "0.5rem",
+          marginTop: "0.6rem",
+        }}>
+          <div style={{
+            ...box,
+            padding: "0.6rem 0.75rem",
+            textAlign: "center" as const,
+          }}>
+            <div style={{ fontSize: "0.65rem", fontFamily: "var(--font-mono)", color: "var(--ink-muted)", textTransform: "uppercase" as const, letterSpacing: "0.05em" }}>Public</div>
+            <div style={{ fontSize: "0.8rem", color: "var(--ink-text)", marginTop: "0.2rem" }}>Graph + Feed</div>
+          </div>
+          <div style={{
+            ...box,
+            padding: "0.6rem 0.75rem",
+            borderColor: "var(--ink-accent)",
+            textAlign: "center" as const,
+          }}>
+            <div style={{ fontSize: "0.65rem", fontFamily: "var(--font-mono)", color: "var(--ink-accent)", textTransform: "uppercase" as const, letterSpacing: "0.05em" }}>Private</div>
+            <div style={{ fontSize: "0.8rem", color: "var(--ink-text)", marginTop: "0.2rem" }}>Review Queue</div>
+          </div>
+        </div>
+      </div>
 
-        {/* Dashed lines to human review loop */}
-        <line x1="275" y1="284" x2="275" y2="330" stroke={c.border} strokeWidth="1" strokeDasharray="4 3" />
-        <line x1="530" y1="284" x2="530" y2="330" stroke={c.border} strokeWidth="1" strokeDasharray="4 3" />
+      {/* Meta orchestration note */}
+      <div style={{
+        marginTop: "1.25rem",
+        padding: "0.75rem 1rem",
+        border: "1px dashed var(--ink-border)",
+        borderRadius: "6px",
+        display: "flex",
+        gap: "0.75rem",
+        alignItems: "baseline",
+      }}>
+        <span style={{ ...title, fontSize: "0.85rem", marginBottom: 0, whiteSpace: "nowrap" as const }}>00 Meta/</span>
+        <span style={{ ...desc, fontStyle: "normal" }}>
+          Orchestrates everything. Index of all pages, operation log, schema definition,
+          review queue. The system&apos;s memory of itself.
+        </span>
+      </div>
 
-        {/* === CAPTION === */}
-        <text x="400" y="408" fill={c.muted} fontSize="10" fontFamily="monospace" textAnchor="middle">
-          150+ books in the vault. The graph grows as you review. Fork: github.com/h3qing/second-brain
-        </text>
-      </svg>
+      {/* Caption */}
+      <div style={{
+        marginTop: "1rem",
+        fontSize: "0.75rem",
+        color: "var(--ink-muted)",
+        textAlign: "center" as const,
+        fontStyle: "italic",
+      }}>
+        150+ books in the vault. The graph grows as you review.
+        Fork this project on <a href="https://github.com/h3qing/second-brain" style={{ color: "var(--ink-accent)" }}>GitHub</a>.
+      </div>
     </div>
   );
 }

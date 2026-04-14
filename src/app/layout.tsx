@@ -37,7 +37,7 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col bg-background text-foreground font-body">
         <main className="flex-auto min-w-0 flex flex-col px-4 md:px-0">
-          <section className="w-full max-w-2xl mx-auto py-8">{children}</section>
+          <section className="w-full max-w-xl mx-auto py-8">{children}</section>
         </main>
       </body>
     </html>

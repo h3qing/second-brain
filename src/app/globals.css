@@ -1,18 +1,25 @@
 @import "tailwindcss";
 
-/* Ink & Parchment — matched to heqinghuang.com */
+/* Ink & Parchment — matched exactly to heqinghuang.com DESIGN.md */
 :root {
-  --background: #ffffff;
-  --foreground: #1a1a1a;
-  --muted: #737373;
-  --border: #d4d4d4;
+  --ink-text: #1a1a1a;
+  --ink-muted: #737373;
+  --ink-accent: #b8845a;
+  --ink-accent-hover: #a6744c;
+  --ink-paper: #ffffff;
+  --ink-border: #d4d4d4;
+  --ink-ink: #000000;
+
+  /* Mapped for component convenience */
+  --background: var(--ink-paper);
+  --foreground: var(--ink-text);
+  --muted: var(--ink-muted);
+  --border: var(--ink-border);
   --card: #fafafa;
-  --accent: #b8845a;
-  --accent-hover: #a6744c;
+  --accent: var(--ink-accent);
   --highlight: #f5f5f5;
   --success: #2d6a2e;
   --danger: #8b3a3a;
-  --ink: #000000;
 }
 
 @theme inline {
@@ -32,37 +39,47 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #000000;
-    --foreground: #e5e5e5;
-    --muted: #a3a3a3;
-    --border: #404040;
+    --ink-text: #e5e5e5;
+    --ink-muted: #a3a3a3;
+    --ink-accent: #c49a6c;
+    --ink-accent-hover: #d4aa7c;
+    --ink-paper: #000000;
+    --ink-border: #404040;
+    --ink-ink: #ffffff;
+
     --card: #171717;
-    --accent: #c49a6c;
-    --accent-hover: #d4aa7c;
     --highlight: #1a1a1a;
     --success: #4a9e4b;
     --danger: #c45454;
-    --ink: #ffffff;
   }
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
+  background: var(--ink-paper);
+  color: var(--ink-text);
   font-family: var(--font-body), Georgia, serif;
   line-height: 1.6;
 }
 
+/* Typography — per DESIGN.md */
 .font-heading {
   font-family: var(--font-heading), "Cormorant Garamond", Georgia, serif;
 }
 
+/* Section labels — monospace uppercase */
 .label {
-  font-size: 11px;
+  font-size: 0.68rem;
   text-transform: uppercase;
-  letter-spacing: 2px;
-  color: var(--muted);
+  letter-spacing: 0.12em;
+  color: var(--ink-muted);
   font-weight: 600;
+  font-family: var(--font-mono);
+}
+
+/* Links — per DESIGN.md */
+a {
+  text-decoration-color: var(--ink-border);
+  transition: all 0.15s;
 }
 
 /* Kindle-friendly buttons — 52px+ touch targets */
@@ -73,11 +90,11 @@ body {
   min-height: 52px;
   min-width: 52px;
   padding: 14px 24px;
-  border-radius: 4px;
+  border-radius: 6px;
   font-weight: 600;
   font-size: 16px;
   cursor: pointer;
-  border: 2px solid var(--border);
+  border: 2px solid var(--ink-border);
   transition: all 0.15s ease;
   font-family: var(--font-body), Georgia, serif;
 }
@@ -105,8 +122,8 @@ body {
 
 .btn-nav {
   background: transparent;
-  color: var(--foreground);
-  border-color: var(--border);
+  color: var(--ink-text);
+  border-color: var(--ink-border);
   min-width: 80px;
   min-height: 44px;
   font-size: 14px;
@@ -114,44 +131,6 @@ body {
 
 .btn-nav:hover {
   background: var(--card);
-}
-
-/* Pipeline architecture diagram — breaks out of max-w-xl */
-.pipeline-diagram {
-  position: relative;
-  width: calc(100% + 4rem);
-  margin-left: -2rem;
-  margin-right: -2rem;
-  padding: 1rem;
-  border: 1px solid var(--border);
-  border-radius: 4px;
-  background: var(--card);
-  overflow-x: auto;
-}
-
-@media (min-width: 768px) {
-  .pipeline-diagram {
-    width: calc(100% + 8rem);
-    margin-left: -4rem;
-    margin-right: -4rem;
-    padding: 1.5rem 2rem;
-  }
-}
-
-@media (prefers-color-scheme: dark) {
-  .pipeline-diagram svg rect[fill="#f5f5f5"] {
-    fill: #1a1a1a;
-  }
-  .pipeline-diagram svg rect[fill="#ffffff"] {
-    fill: #0a0a0a;
-  }
-  .pipeline-diagram svg text[fill="#1a1a1a"] {
-    fill: #e5e5e5;
-  }
-  .pipeline-diagram svg line,
-  .pipeline-diagram svg polygon {
-    filter: brightness(1.5);
-  }
 }
 
 .bg-highlight {
@@ -165,60 +144,62 @@ body {
 .prose-warm h2,
 .prose-warm h3 {
   font-family: var(--font-heading), "Cormorant Garamond", Georgia, serif;
-  font-weight: 600;
-  color: var(--foreground);
+  color: var(--ink-ink);
   margin-top: 1.5em;
   margin-bottom: 0.5em;
+  letter-spacing: -0.01em;
 }
 
-.prose-warm h1 { font-size: 1.5rem; }
-.prose-warm h2 { font-size: 1.2rem; }
-.prose-warm h3 { font-size: 1rem; }
+.prose-warm h1 { font-size: 1.5rem; font-weight: 300; }
+.prose-warm h2 { font-size: 1.25rem; font-weight: 400; }
+.prose-warm h3 { font-size: 1.125rem; font-weight: 400; }
 
 .prose-warm p {
-  font-size: 0.95rem;
+  font-size: 1rem;
   line-height: 1.7;
-  margin-bottom: 1em;
+  margin: 1rem 0;
 }
 
-.prose-warm ul,
-.prose-warm ol {
+.prose-warm ul, .prose-warm ol {
   padding-left: 1.5em;
-  margin-bottom: 1em;
+  margin: 1rem 0;
 }
 
 .prose-warm li {
-  font-size: 0.95rem;
+  font-size: 1rem;
   line-height: 1.6;
   margin-bottom: 0.25em;
 }
 
 .prose-warm blockquote {
-  border-left: 3px solid var(--accent);
-  padding-left: 1em;
-  margin: 1em 0;
-  background: var(--highlight);
-  padding: 0.75em 1em;
-  border-radius: 2px;
+  border-left: 2px solid var(--ink-accent);
+  padding-left: 1rem;
+  margin: 1rem 0;
+  border-radius: 0.375rem;
+  color: var(--ink-muted);
   font-style: italic;
-  color: var(--muted);
 }
 
 .prose-warm a.wikilink {
-  color: var(--accent);
-  text-decoration: none;
-  border-bottom: 1px solid var(--border);
-  transition: border-color 0.15s;
+  color: var(--ink-accent);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  text-decoration-color: var(--ink-border);
+  transition: all 0.15s;
 }
 
 .prose-warm a.wikilink:hover {
-  border-color: var(--accent);
+  text-decoration-color: var(--ink-accent);
 }
 
 .prose-warm code {
   font-family: var(--font-mono);
-  font-size: 0.85em;
-  background: var(--card);
-  padding: 0.15em 0.35em;
-  border-radius: 3px;
+  font-size: 0.875em;
+  padding: 0.1em 0.3em;
+  border-radius: 0.5rem;
+}
+
+.prose-warm strong {
+  font-weight: 500;
+  color: var(--ink-ink);
 }
