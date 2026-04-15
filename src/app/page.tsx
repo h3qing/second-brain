@@ -17,42 +17,83 @@ export default async function Home() {
 
   return (
     <div className="space-y-8">
+      {/* Navigation — top of page */}
+      <nav className="flex items-center justify-between py-1">
+        <div className="flex items-center gap-4 text-sm">
+          <Link
+            href="/"
+            className="text-foreground hover:text-accent transition-colors"
+          >
+            home
+          </Link>
+          <Link
+            href="/login"
+            className="text-muted hover:text-foreground transition-colors"
+          >
+            review mode
+          </Link>
+          <a
+            href="https://heqinghuang.com"
+            className="text-muted hover:text-foreground transition-colors"
+          >
+            blog
+          </a>
+          <a
+            href="https://github.com/h3qing/second-brain"
+            className="text-muted hover:text-foreground transition-colors"
+          >
+            github
+          </a>
+        </div>
+      </nav>
+
+      {/* Header */}
       <div>
-        <p className="label mb-2">Second Brain</p>
-        <h1 className="text-3xl font-heading tracking-tight">
+        <h1
+          className="font-heading tracking-tight"
+          style={{ fontSize: "2.2rem", fontWeight: 300, letterSpacing: "-0.01em" }}
+        >
           Heqing&apos;s Knowledge Base
         </h1>
-        <p className="text-muted text-sm mt-2">
+        <p className="text-muted mt-2" style={{ fontSize: "1.05rem", lineHeight: 1.7 }}>
           150+ books processed through an AI-assisted extraction pipeline.
-          Human-reviewed.
+          Human-reviewed. Open source.
         </p>
       </div>
 
-      {/* Stats */}
-      <div className="flex gap-6 text-sm">
-        <div>
-          <span className="text-2xl font-heading text-accent">
-            {reviewedCount}
-          </span>
-          <span className="text-muted ml-1">reviewed</span>
-        </div>
-        <div>
-          <span className="text-2xl font-heading text-accent">
-            {totalLinks}
-          </span>
-          <span className="text-muted ml-1">connections</span>
-        </div>
-      </div>
+      {/* How It Works — prominent, right after intro */}
+      <PipelineDiagram />
 
-      {/* Knowledge Graph */}
-      <GraphSection data={graphData} />
+      {/* Stats — only show when there's something to show */}
+      {(reviewedCount > 0 || totalLinks > 0) && (
+        <div className="flex gap-8 text-sm border-t border-b border-border py-4">
+          <div>
+            <span className="text-2xl font-heading text-accent">
+              {reviewedCount}
+            </span>
+            <span className="text-muted ml-1.5">reviewed</span>
+          </div>
+          <div>
+            <span className="text-2xl font-heading text-accent">
+              {totalLinks}
+            </span>
+            <span className="text-muted ml-1.5">connections</span>
+          </div>
+          <div>
+            <span className="text-2xl font-heading text-accent">
+              150+
+            </span>
+            <span className="text-muted ml-1.5">books</span>
+          </div>
+        </div>
+      )}
 
       {/* Pipeline Feed */}
       {feedEntries.length > 0 && (
         <div>
-          <p className="label mb-3">Pipeline Feed</p>
+          <p className="label mb-3">Recent Activity</p>
           <div className="space-y-0">
-            {feedEntries.map((entry, i) => (
+            {feedEntries.slice(0, 8).map((entry, i) => (
               <div key={i} className="py-3 border-b border-border">
                 <span className="text-xs text-muted font-mono">
                   {entry.date}
@@ -74,27 +115,27 @@ export default async function Home() {
         </div>
       )}
 
-      {/* System Architecture */}
-      <div>
-        <p className="label mb-3">How It Works</p>
-        <PipelineDiagram />
-      </div>
+      {/* Knowledge Graph — bottom, grows over time */}
+      {reviewedCount > 0 && (
+        <div>
+          <p className="label mb-3">Knowledge Graph</p>
+          <GraphSection data={graphData} />
+        </div>
+      )}
 
-      {/* Footer links */}
-      <div className="border-t border-border pt-4 text-sm text-muted space-x-4">
-        <Link
-          href="/login"
-          className="hover:text-foreground transition-colors"
-        >
-          Review Mode
-        </Link>
-        <a
-          href="https://heqinghuang.com"
-          className="hover:text-foreground transition-colors"
-        >
-          Blog
-        </a>
-      </div>
+      {/* Footer */}
+      <footer className="border-t border-border pt-4 pb-8 text-xs text-muted">
+        <p>
+          Built with{" "}
+          <a href="https://claude.ai" className="text-accent hover:underline">Claude Code</a>
+          {" "}+{" "}
+          <a href="https://obsidian.md" className="text-accent hover:underline">Obsidian</a>.
+          Inspired by{" "}
+          <a href="https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f" className="text-accent hover:underline">
+            Karpathy&apos;s LLM Wiki
+          </a>.
+        </p>
+      </footer>
     </div>
   );
 }
