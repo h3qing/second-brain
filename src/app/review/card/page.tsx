@@ -61,40 +61,14 @@ export default async function CardReview({
           {item.title}
         </h1>
 
-        {/* Content body */}
-        <div className="text-foreground leading-relaxed space-y-3">
-          {item.content
-            .replace(/^#\s+.+$/m, "")
-            .replace(/##\s*Source\s*Highlights?[\s\S]*?(?=\n##|$)/i, "")
-            .replace(/##\s*Related\s*Concepts?[\s\S]*?(?=\n##|$)/i, "")
-            .replace(/!\[\[.*?\]\]/g, "")
-            .trim()
-            .split("\n")
-            .filter((line) => line.trim() !== "")
-            .map((line, i) => {
-              if (line.startsWith("## ")) {
-                return (
-                  <h2 key={i} className="text-xs font-semibold text-muted uppercase tracking-wide pt-2">
-                    {line.replace(/^##\s*/, "")}
-                  </h2>
-                );
-              }
-              return (
-                <p key={i} className="text-sm leading-relaxed">
-                  {line.replace(/^[-*]\s*/, "")}
-                </p>
-              );
-            })}
-        </div>
-
-        {/* Source Highlights */}
+        {/* Original Highlights — first, so you read the source before the insight */}
         {item.sourceHighlights.length > 0 && (
-          <div className="border-t border-border pt-5 space-y-3">
-            <h2 className="label">Original Highlights</h2>
+          <div className="space-y-3">
+            <h2 className="label">Original Highlight</h2>
             {item.sourceHighlights.map((h, i) => (
               <blockquote
                 key={i}
-                className="border-l-2 border-accent pl-4 py-1"
+                className="border-l-2 border-accent pl-4 py-2"
                 style={{ background: "var(--highlight)" }}
               >
                 <p className="text-sm italic leading-relaxed">{h.text}</p>
@@ -107,6 +81,24 @@ export default async function CardReview({
             ))}
           </div>
         )}
+
+        {/* Insight — the AI-extracted interpretation */}
+        <div className="border-t border-border pt-5 text-foreground leading-relaxed space-y-3">
+          <h2 className="label">Insight</h2>
+          {item.content
+            .replace(/^#\s+.+$/m, "")
+            .replace(/##\s*Source\s*Highlights?[\s\S]*?(?=\n##|$)/i, "")
+            .replace(/##\s*Related\s*Concepts?[\s\S]*?(?=\n##|$)/i, "")
+            .replace(/!\[\[.*?\]\]/g, "")
+            .trim()
+            .split("\n")
+            .filter((line) => line.trim() !== "" && !line.startsWith("## "))
+            .map((line, i) => (
+              <p key={i} className="text-sm leading-relaxed">
+                {line.replace(/^[-*]\s*/, "")}
+              </p>
+            ))}
+        </div>
 
         {/* Related Concepts */}
         {item.relatedConcepts.length > 0 && (
