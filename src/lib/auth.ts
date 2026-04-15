@@ -1,5 +1,6 @@
 import { cookies } from "next/headers";
 import bcrypt from "bcryptjs";
+import { createHmac, timingSafeEqual } from "crypto";
 
 const SESSION_COOKIE = "secondbrain-session";
 const SESSION_DURATION = 30 * 24 * 60 * 60; // 30 days
@@ -55,10 +56,19 @@ export function clearAttempts(ip: string): void {
   loginAttempts.delete(ip);
 }
 
+// PIN verification — bcrypt (slow, runs once on login)
 export async function verifyPin(pin: string): Promise<boolean> {
   const hash = process.env.AUTH_PIN_HASH;
   if (!hash) return false;
   return bcrypt.compare(pin, hash);
+}
+
+// Session token — HMAC (fast, runs on every authenticated request)
+function computeSessionToken(): string {
+  const pinHash = process.env.AUTH_PIN_HASH || "";
+  return createHmac("sha256", pinHash)
+    .update("secondbrain-session-v1")
+    .digest("hex");
 }
 
 export async function verifySession(): Promise<boolean> {
@@ -66,21 +76,21 @@ export async function verifySession(): Promise<boolean> {
   const session = cookieStore.get(SESSION_COOKIE);
   if (!session) return false;
 
-  // Session token is a bcrypt hash of the PIN hash (double-hashed)
-  // Verify it matches the stored PIN hash
-  const pinHash = process.env.AUTH_PIN_HASH;
-  if (!pinHash) return false;
-  return bcrypt.compare(pinHash, session.value);
+  const expected = computeSessionToken();
+  try {
+    return timingSafeEqual(
+      Buffer.from(session.value),
+      Buffer.from(expected)
+    );
+  } catch {
+    return false;
+  }
 }
 
 export async function createSession(): Promise<void> {
-  const pinHash = process.env.AUTH_PIN_HASH;
-  if (!pinHash) return;
-
-  // Create a session token by hashing the PIN hash
-  const sessionToken = await bcrypt.hash(pinHash, 10);
+  const token = computeSessionToken();
   const cookieStore = await cookies();
-  cookieStore.set(SESSION_COOKIE, sessionToken, {
+  cookieStore.set(SESSION_COOKIE, token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
