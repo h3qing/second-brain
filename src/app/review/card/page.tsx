@@ -67,19 +67,20 @@ export default async function CardReview({
             .replace(/^#\s+.+$/m, "")
             .replace(/##\s*Source\s*Highlights?[\s\S]*?(?=\n##|$)/i, "")
             .replace(/##\s*Related\s*Concepts?[\s\S]*?(?=\n##|$)/i, "")
+            .replace(/!\[\[.*?\]\]/g, "")
             .trim()
             .split("\n\n")
             .filter(Boolean)
             .map((paragraph, i) => {
               if (paragraph.startsWith("## ")) {
                 return (
-                  <h2 key={i} className="label pt-2">
+                  <h2 key={i} className="text-xs font-semibold text-muted uppercase tracking-wide pt-2">
                     {paragraph.replace(/^##\s*/, "")}
                   </h2>
                 );
               }
               return (
-                <p key={i} className="text-sm leading-relaxed">
+                <p key={i} className="text-sm leading-relaxed" style={{ textTransform: "none" }}>
                   {paragraph.replace(/^[-*]\s*/, "")}
                 </p>
               );
