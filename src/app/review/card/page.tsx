@@ -123,12 +123,14 @@ export default async function CardReview({
         )}
       </div>
 
-      {/* Action Buttons */}
+      {/* Action Buttons — pass SHA + rawContent so action skips the API read */}
       <div className="flex gap-3">
         <form action={reviewAction} className="flex-1">
           <input type="hidden" name="path" value={currentPath} />
           <input type="hidden" name="action" value="approve" />
           <input type="hidden" name="returnTo" value={nextForAction} />
+          <input type="hidden" name="sha" value={item.sha} />
+          <input type="hidden" name="rawContent" value={item.rawContent} />
           <button type="submit" className="btn btn-approve w-full text-lg">
             Approve
           </button>
@@ -138,6 +140,8 @@ export default async function CardReview({
           <input type="hidden" name="path" value={currentPath} />
           <input type="hidden" name="action" value="contest" />
           <input type="hidden" name="returnTo" value={nextForAction} />
+          <input type="hidden" name="sha" value={item.sha} />
+          <input type="hidden" name="rawContent" value={item.rawContent} />
           <button type="submit" className="btn btn-contest w-full text-lg">
             Contest
           </button>
