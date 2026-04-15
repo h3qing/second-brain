@@ -56,11 +56,21 @@ async function getReviewItems(): Promise<{
   };
 }
 
-function ItemRow({ item, index }: { item: QueueItem; index: number }) {
-  const encodedPath = encodeURIComponent(item.path);
+function buildCardUrl(items: QueueItem[], index: number, total: number): string {
+  const item = items[index];
+  const params = new URLSearchParams();
+  params.set("path", item.path);
+  if (index > 0) params.set("prev", items[index - 1].path);
+  if (index < items.length - 1) params.set("next", items[index + 1].path);
+  params.set("pos", `${index + 1} of ${total}`);
+  return `/review/card?${params.toString()}`;
+}
+
+function ItemRow({ item, index, items }: { item: QueueItem; index: number; items: QueueItem[] }) {
+  const href = buildCardUrl(items, index, items.length);
   return (
     <Link
-      href={`/review/card?path=${encodedPath}`}
+      href={href}
       className="flex flex-col md:flex-row md:items-center gap-1 md:gap-4 py-3 border-b border-border hover:bg-card px-2 -mx-2 rounded transition-colors"
     >
       <span className="text-sm text-muted tabular-nums w-8 shrink-0">
@@ -88,9 +98,9 @@ export default async function ReviewQueue() {
     <div className="space-y-8">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-heading tracking-tight">Review Queue</h1>
-        {firstUnreviewed && (
+        {unreviewed.length > 0 && (
           <Link
-            href={`/review/card?path=${encodeURIComponent(firstUnreviewed.path)}`}
+            href={buildCardUrl(unreviewed, 0, unreviewed.length)}
             className="btn bg-foreground text-background border-foreground text-sm"
           >
             Start Reviewing
@@ -120,7 +130,7 @@ export default async function ReviewQueue() {
           </h2>
           <div>
             {unreviewed.map((item, i) => (
-              <ItemRow key={item.path} item={item} index={i} />
+              <ItemRow key={item.path} item={item} index={i} items={unreviewed} />
             ))}
           </div>
         </div>
@@ -133,7 +143,7 @@ export default async function ReviewQueue() {
           </h2>
           <div>
             {contested.map((item, i) => (
-              <ItemRow key={item.path} item={item} index={i} />
+              <ItemRow key={item.path} item={item} index={i} items={contested} />
             ))}
           </div>
         </div>
@@ -146,7 +156,7 @@ export default async function ReviewQueue() {
           </h2>
           <div>
             {reviewed.slice(0, 10).map((item, i) => (
-              <ItemRow key={item.path} item={item} index={i} />
+              <ItemRow key={item.path} item={item} index={i} items={reviewed.slice(0, 10)} />
             ))}
           </div>
         </div>

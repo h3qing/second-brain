@@ -1,35 +1,14 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { verifySession } from "@/lib/auth";
-import { listFiles, getFileContent } from "@/lib/github";
-import { parseFrontmatter, parseReviewItem } from "@/lib/parser";
+import { getFileContent } from "@/lib/github";
+import { parseReviewItem } from "@/lib/parser";
 import { reviewAction } from "@/app/review/action";
-
-async function getUnreviewedPaths(): Promise<string[]> {
-  const dirs = ["20 Ideas", "30 Concept"];
-  const allPaths: string[] = [];
-
-  for (const dir of dirs) {
-    const paths = await listFiles(dir);
-    allPaths.push(...paths);
-  }
-
-  const unreviewedPaths: string[] = [];
-  for (const path of allPaths) {
-    const file = await getFileContent(path);
-    if (!file) continue;
-    const { frontmatter } = parseFrontmatter(file.content);
-    if (frontmatter.review_status === "unreviewed") {
-      unreviewedPaths.push(path);
-    }
-  }
-  return unreviewedPaths;
-}
 
 export default async function CardReview({
   searchParams,
 }: {
-  searchParams: Promise<{ path?: string }>;
+  searchParams: Promise<{ path?: string; next?: string; prev?: string; pos?: string }>;
 }) {
   const isLoggedIn = await verifySession();
   if (!isLoggedIn) redirect("/login");
@@ -44,21 +23,14 @@ export default async function CardReview({
 
   const item = await parseReviewItem(currentPath, file.sha, file.content);
 
-  const unreviewedPaths = await getUnreviewedPaths();
-  const currentIndex = unreviewedPaths.indexOf(currentPath);
-  const prevPath =
-    currentIndex > 0 ? unreviewedPaths[currentIndex - 1] : null;
-  const nextPath =
-    currentIndex < unreviewedPaths.length - 1
-      ? unreviewedPaths[currentIndex + 1]
-      : null;
+  // Navigation comes from query params (set by the review queue page)
+  const nextPath = params.next || null;
+  const prevPath = params.prev || null;
+  const position = params.pos || "";
+
   const nextForAction = nextPath
     ? `/review/card?path=${encodeURIComponent(nextPath)}`
     : "/review";
-  const position =
-    currentIndex >= 0
-      ? `${currentIndex + 1} of ${unreviewedPaths.length}`
-      : "";
 
   const pathParts = currentPath.split("/");
   const folder =
@@ -101,10 +73,7 @@ export default async function CardReview({
             .map((paragraph, i) => {
               if (paragraph.startsWith("## ")) {
                 return (
-                  <h2
-                    key={i}
-                    className="label pt-2"
-                  >
+                  <h2 key={i} className="label pt-2">
                     {paragraph.replace(/^##\s*/, "")}
                   </h2>
                 );
@@ -124,7 +93,8 @@ export default async function CardReview({
             {item.sourceHighlights.map((h, i) => (
               <blockquote
                 key={i}
-                className="border-l-3 border-accent pl-4 py-1 bg-highlight"
+                className="border-l-2 border-accent pl-4 py-1"
+                style={{ background: "var(--highlight)" }}
               >
                 <p className="text-sm italic leading-relaxed">{h.text}</p>
                 {h.location && (
