@@ -10,12 +10,15 @@ interface QueueItem {
   source: string;
   status: string;
   folder: string;
+  nextReviewDate?: string;
+  reviewCount?: number;
 }
 
 async function getReviewItems(): Promise<{
   unreviewed: QueueItem[];
   contested: QueueItem[];
   reviewed: QueueItem[];
+  dueForReview: QueueItem[];
 }> {
   const dirs = ["20 Ideas", "30 Concept"];
   const allPaths: string[] = [];
@@ -46,28 +49,53 @@ async function getReviewItems(): Promise<{
       source,
       status: frontmatter.review_status as string,
       folder,
+      nextReviewDate: frontmatter.next_review_date as string | undefined,
+      reviewCount: frontmatter.review_count as number | undefined,
     });
   }
+
+  const today = new Date().toISOString().split("T")[0];
+  const reviewed = items.filter((i) => i.status === "reviewed");
+  const dueForReview = reviewed.filter(
+    (i) => i.nextReviewDate && i.nextReviewDate <= today
+  );
 
   return {
     unreviewed: items.filter((i) => i.status === "unreviewed"),
     contested: items.filter((i) => i.status === "contested"),
-    reviewed: items.filter((i) => i.status === "reviewed"),
+    reviewed,
+    dueForReview,
   };
 }
 
-function buildCardUrl(items: QueueItem[], index: number, total: number): string {
+function buildCardUrl(
+  items: QueueItem[],
+  index: number,
+  total: number,
+  mode?: string
+): string {
   const item = items[index];
   const params = new URLSearchParams();
   params.set("path", item.path);
   if (index > 0) params.set("prev", items[index - 1].path);
   if (index < items.length - 1) params.set("next", items[index + 1].path);
   params.set("pos", `${index + 1} of ${total}`);
+  if (mode) params.set("mode", mode);
   return `/review/card?${params.toString()}`;
 }
 
-function ItemRow({ item, index, items }: { item: QueueItem; index: number; items: QueueItem[] }) {
-  const href = buildCardUrl(items, index, items.length);
+function ItemRow({
+  item,
+  index,
+  items,
+  mode,
+}: {
+  item: QueueItem;
+  index: number;
+  items: QueueItem[];
+  mode?: string;
+}) {
+  const href = buildCardUrl(items, index, items.length, mode);
   return (
     <Link
       href={href}
@@ -91,8 +119,8 @@ export default async function ReviewQueue() {
   const isLoggedIn = await verifySession();
   if (!isLoggedIn) redirect("/login");
 
-  const { unreviewed, contested, reviewed } = await getReviewItems();
-  const firstUnreviewed = unreviewed[0];
+  const { unreviewed, contested, reviewed, dueForReview } =
+    await getReviewItems();
 
   return (
     <div className="space-y-8">
@@ -108,11 +136,17 @@ export default async function ReviewQueue() {
         )}
       </div>
 
-      <div className="flex gap-6 text-sm">
+      <div className="flex gap-6 text-sm flex-wrap">
         <div>
           <span className="text-2xl font-heading">{unreviewed.length}</span>
           <span className="text-muted ml-1">unreviewed</span>
         </div>
+        {dueForReview.length > 0 && (
+          <div>
+            <span className="text-2xl font-heading">{dueForReview.length}</span>
+            <span className="text-muted ml-1">due for re-review</span>
+          </div>
+        )}
         <div>
           <span className="text-2xl font-heading">{contested.length}</span>
           <span className="text-muted ml-1">contested</span>
@@ -131,6 +165,25 @@ export default async function ReviewQueue() {
           <div>
             {unreviewed.map((item, i) => (
               <ItemRow key={item.path} item={item} index={i} items={unreviewed} />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {dueForReview.length > 0 && (
+        <div>
+          <h2 className="label mb-3" style={{ color: "var(--ink-accent)" }}>
+            Review Again ({dueForReview.length})
+          </h2>
+          <div>
+            {dueForReview.map((item, i) => (
+              <ItemRow
+                key={item.path}
+                item={item}
+                index={i}
+                items={dueForReview}
+                mode="rereview"
+              />
             ))}
           </div>
         </div>

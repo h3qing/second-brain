@@ -8,7 +8,13 @@ import { reviewAction } from "@/app/review/action";
 export default async function CardReview({
   searchParams,
 }: {
-  searchParams: Promise<{ path?: string; next?: string; prev?: string; pos?: string }>;
+  searchParams: Promise<{
+    path?: string;
+    next?: string;
+    prev?: string;
+    pos?: string;
+    mode?: string;
+  }>;
 }) {
   const isLoggedIn = await verifySession();
   if (!isLoggedIn) redirect("/login");
@@ -28,8 +34,14 @@ export default async function CardReview({
   const prevPath = params.prev || null;
   const position = params.pos || "";
 
+  const isReReview =
+    params.mode === "rereview" ||
+    (typeof item.frontmatter.review_count === "number" &&
+      item.frontmatter.review_count >= 1 &&
+      item.frontmatter.review_status === "reviewed");
+
   const nextForAction = nextPath
-    ? `/review/card?path=${encodeURIComponent(nextPath)}`
+    ? `/review/card?path=${encodeURIComponent(nextPath)}${isReReview ? "&mode=rereview" : ""}`
     : "/review";
 
   const pathParts = currentPath.split("/");
@@ -88,6 +100,7 @@ export default async function CardReview({
           {item.content
             .replace(/^#\s+.+$/m, "")
             .replace(/##\s*Source\s*Highlights?[\s\S]*?(?=\n##|$)/i, "")
+            .replace(/##\s*Source\s*Context[\s\S]*?(?=\n##|$)/i, "")
             .replace(/##\s*Related\s*Concepts?[\s\S]*?(?=\n##|$)/i, "")
             .replace(/!\[\[.*?\]\]/g, "")
             .trim()
@@ -99,6 +112,33 @@ export default async function CardReview({
               </p>
             ))}
         </div>
+
+        {/* Source Context — timestamps, quotes from the original source */}
+        {item.sourceContext.length > 0 && (
+          <div className="space-y-3">
+            <h2 className="label">Source Context</h2>
+            {item.sourceContext.map((ctx, i) => (
+              <blockquote
+                key={i}
+                className="border-l-2 border-accent pl-4 py-2"
+                style={{ background: "var(--highlight)" }}
+              >
+                <p className="text-sm italic leading-relaxed">{ctx.quote}</p>
+                {ctx.timestampLabel && ctx.timestampUrl && (
+                  <a
+                    href={ctx.timestampUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs font-mono mt-1 inline-block"
+                    style={{ color: "var(--ink-accent)" }}
+                  >
+                    {ctx.timestampLabel}
+                  </a>
+                )}
+              </blockquote>
+            ))}
+          </div>
+        )}
 
         {/* Related Concepts */}
         {item.relatedConcepts.length > 0 && (
@@ -116,29 +156,54 @@ export default async function CardReview({
       </div>
 
       {/* Action Buttons — pass SHA + rawContent so action skips the API read */}
-      <div className="flex gap-3">
-        <form action={reviewAction} className="flex-1">
-          <input type="hidden" name="path" value={currentPath} />
-          <input type="hidden" name="action" value="approve" />
-          <input type="hidden" name="returnTo" value={nextForAction} />
-          <input type="hidden" name="sha" value={item.sha} />
-          <input type="hidden" name="rawContent" value={item.rawContent} />
-          <button type="submit" className="btn btn-approve w-full text-lg">
-            Approve
-          </button>
-        </form>
+      {isReReview ? (
+        <div>
+          <p className="text-sm text-muted mb-3 text-center">
+            How well did you recall this?
+          </p>
+          <div className="flex gap-3">
+            {(["hard", "medium", "easy"] as const).map((difficulty) => (
+              <form key={difficulty} action={reviewAction} className="flex-1">
+                <input type="hidden" name="path" value={currentPath} />
+                <input type="hidden" name="action" value={difficulty} />
+                <input type="hidden" name="returnTo" value={nextForAction} />
+                <input type="hidden" name="sha" value={item.sha} />
+                <input type="hidden" name="rawContent" value={item.rawContent} />
+                <button
+                  type="submit"
+                  className={`btn btn-${difficulty} w-full text-lg capitalize`}
+                >
+                  {difficulty}
+                </button>
+              </form>
+            ))}
+          </div>
+        </div>
+      ) : (
+        <div className="flex gap-3">
+          <form action={reviewAction} className="flex-1">
+            <input type="hidden" name="path" value={currentPath} />
+            <input type="hidden" name="action" value="approve" />
+            <input type="hidden" name="returnTo" value={nextForAction} />
+            <input type="hidden" name="sha" value={item.sha} />
+            <input type="hidden" name="rawContent" value={item.rawContent} />
+            <button type="submit" className="btn btn-approve w-full text-lg">
+              Approve
+            </button>
+          </form>
 
-        <form action={reviewAction} className="flex-1">
-          <input type="hidden" name="path" value={currentPath} />
-          <input type="hidden" name="action" value="contest" />
-          <input type="hidden" name="returnTo" value={nextForAction} />
-          <input type="hidden" name="sha" value={item.sha} />
-          <input type="hidden" name="rawContent" value={item.rawContent} />
-          <button type="submit" className="btn btn-contest w-full text-lg">
-            Contest
-          </button>
-        </form>
-      </div>
+          <form action={reviewAction} className="flex-1">
+            <input type="hidden" name="path" value={currentPath} />
+            <input type="hidden" name="action" value="contest" />
+            <input type="hidden" name="returnTo" value={nextForAction} />
+            <input type="hidden" name="sha" value={item.sha} />
+            <input type="hidden" name="rawContent" value={item.rawContent} />
+            <button type="submit" className="btn btn-contest w-full text-lg">
+              Contest
+            </button>
+          </form>
+        </div>
+      )}
 
       {nextPath && (
         <div className="text-center">

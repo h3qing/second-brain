@@ -120,6 +120,36 @@ a {
   color: #ffffff;
 }
 
+.btn-easy {
+  background: var(--success);
+  color: #ffffff;
+  border-color: var(--success);
+}
+
+.btn-easy:hover {
+  opacity: 0.85;
+}
+
+.btn-medium {
+  background: var(--ink-accent);
+  color: #ffffff;
+  border-color: var(--ink-accent);
+}
+
+.btn-medium:hover {
+  opacity: 0.85;
+}
+
+.btn-hard {
+  background: var(--danger);
+  color: #ffffff;
+  border-color: var(--danger);
+}
+
+.btn-hard:hover {
+  opacity: 0.85;
+}
+
 .btn-nav {
   background: transparent;
   color: var(--ink-text);
