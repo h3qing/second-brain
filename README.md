@@ -111,14 +111,16 @@ The app expects an Obsidian vault following the [LLM Wiki pattern](https://gist.
 
 ```
 00 Meta/           Schema, log, index, review queue
-10 Notes/          Raw sources (Kindle highlights, articles, podcasts)
-20 Ideas/          Atomic ideas extracted per source
-30 Concept/        Cross-source concept synthesis
+10 Notes/          Raw sources (immutable — Kindle highlights, articles, podcasts)
+20 Ideas/          Atomic ideas extracted per source (AI-generated, human-reviewed)
+30 Concept/        Lean hub nodes — one-sentence definition + tensions + related concepts
 40 Write/          Human writing and publishing
 CLAUDE.md          Schema definition for Claude Code
 ```
 
-Each idea file has frontmatter with `review_status: unreviewed | reviewed | contested`. The web app filters by this field.
+**Ideas** have frontmatter with `review_status: unreviewed | reviewed | contested`. The web app filters by this field.
+
+**Concepts** are lean hub nodes (~17 lines). They don't list linked ideas — Obsidian's backlinks pane shows those automatically. A concept page is just: definition, tensions where sources disagree, and related concept wikilinks.
 
 ## Inspired by
 
