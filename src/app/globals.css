@@ -7,7 +7,7 @@
   --ink-accent: #b8845a;
   --ink-accent-hover: #a6744c;
   --ink-paper: #ffffff;
-  --ink-border: #a3a3a3;
+  --ink-border: #d4d4d4;
   --ink-ink: #000000;
 
   /* Mapped for component convenience */
@@ -44,7 +44,7 @@
     --ink-accent: #c49a6c;
     --ink-accent-hover: #d4aa7c;
     --ink-paper: #000000;
-    --ink-border: #525252;
+    --ink-border: #404040;
     --ink-ink: #ffffff;
 
     --card: #171717;
@@ -167,6 +167,33 @@ a {
   background: var(--highlight);
   border-radius: 2px;
   padding: 8px 0;
+}
+
+/* Action row: side-by-side on laptop/phone, stacked on Kindle e-ink.
+   Kindle's WebKit doesn't support flex `gap`, and a stacked layout
+   gives a generous tap target on its capacitive screen. */
+.action-row {
+  display: flex;
+  gap: 0.75rem;
+}
+.action-row > * {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Kindle e-ink and other monochrome displays. */
+@media (monochrome) {
+  :root {
+    /* Light gray borders disappear on e-ink — bump for visibility. */
+    --ink-border: #737373;
+  }
+
+  .action-row {
+    display: block;
+  }
+  .action-row > * + * {
+    margin-top: 0.75rem;
+  }
 }
 
 /* Long-form reading: Crimson Pro at book-like size & rhythm.
