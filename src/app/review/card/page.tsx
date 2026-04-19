@@ -180,33 +180,35 @@ export default async function CardReview({
         </section>
       )}
 
-      {/* Action buttons — stacked vertically so they render reliably on Kindle
-          and give a generous tap target on phone. Desktop users barely notice. */}
-      <div className="pt-2 space-y-3">
+      {/* Action buttons — side-by-side on laptop/phone, stacks on Kindle
+          via .action-row's @media (monochrome) override. */}
+      <div className="pt-2">
         {isReReview ? (
           <>
-            <p className="text-sm text-muted text-center">
+            <p className="text-sm text-muted text-center mb-3">
               How well did you recall this?
             </p>
-            {(["easy", "medium", "hard"] as const).map((difficulty) => (
-              <form key={difficulty} action={reviewAction} className="block">
-                <input type="hidden" name="path" value={currentPath} />
-                <input type="hidden" name="action" value={difficulty} />
-                <input type="hidden" name="returnTo" value={nextForAction} />
-                <input type="hidden" name="sha" value={item.sha} />
-                <input type="hidden" name="rawContent" value={item.rawContent} />
-                <button
-                  type="submit"
-                  className={`btn btn-${difficulty} w-full text-lg capitalize`}
-                >
-                  {difficulty}
-                </button>
-              </form>
-            ))}
+            <div className="action-row">
+              {(["easy", "medium", "hard"] as const).map((difficulty) => (
+                <form key={difficulty} action={reviewAction}>
+                  <input type="hidden" name="path" value={currentPath} />
+                  <input type="hidden" name="action" value={difficulty} />
+                  <input type="hidden" name="returnTo" value={nextForAction} />
+                  <input type="hidden" name="sha" value={item.sha} />
+                  <input type="hidden" name="rawContent" value={item.rawContent} />
+                  <button
+                    type="submit"
+                    className={`btn btn-${difficulty} w-full text-lg capitalize`}
+                  >
+                    {difficulty}
+                  </button>
+                </form>
+              ))}
+            </div>
           </>
         ) : (
-          <>
-            <form action={reviewAction} className="block">
+          <div className="action-row">
+            <form action={reviewAction}>
               <input type="hidden" name="path" value={currentPath} />
               <input type="hidden" name="action" value="approve" />
               <input type="hidden" name="returnTo" value={nextForAction} />
@@ -217,7 +219,7 @@ export default async function CardReview({
               </button>
             </form>
 
-            <form action={reviewAction} className="block">
+            <form action={reviewAction}>
               <input type="hidden" name="path" value={currentPath} />
               <input type="hidden" name="action" value="contest" />
               <input type="hidden" name="returnTo" value={nextForAction} />
@@ -227,7 +229,7 @@ export default async function CardReview({
                 Contest
               </button>
             </form>
-          </>
+          </div>
         )}
       </div>
 
