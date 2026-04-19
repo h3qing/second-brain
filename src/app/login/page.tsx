@@ -1,7 +1,3 @@
-"use client";
-
-import { Suspense, useMemo } from "react";
-import { useSearchParams } from "next/navigation";
 import { loginAction } from "./action";
 
 const messages = [
@@ -15,32 +11,42 @@ const messages = [
   "Behind this PIN: Kindle highlights, atomic ideas, and one person's attempt to remember what they read.",
 ];
 
-function LoginForm() {
-  const searchParams = useSearchParams();
-  const hasError = searchParams.get("error") === "1";
-  const isLocked = searchParams.get("locked") === "1";
-
-  const message = useMemo(
-    () => messages[Math.floor(Math.random() * messages.length)],
-    []
-  );
+export default async function LoginPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}) {
+  const params = await searchParams;
+  const hasError = params.error === "1";
+  const isLocked = params.locked === "1";
+  // eslint-disable-next-line react-hooks/purity
+  const message = messages[Math.floor(Math.random() * messages.length)];
 
   return (
-    <>
-      <form action={loginAction} className="w-full max-w-xs space-y-4">
-        <div>
-          <input
-            type="password"
-            name="pin"
-            placeholder="Enter PIN"
-            autoComplete="current-password"
-            inputMode="numeric"
-            className="w-full px-4 py-3 text-center text-lg tracking-widest bg-transparent border-2 border-border rounded-lg focus:outline-none focus:border-foreground transition-colors font-mono"
-            required
-            autoFocus
-            disabled={isLocked}
-          />
-        </div>
+    <div className="flex flex-col items-center py-8 sm:py-16">
+      <p className="label mb-2">Second Brain</p>
+      <h1 className="text-2xl sm:text-3xl font-heading mb-1 text-center">
+        Review Mode
+      </h1>
+      <p className="text-muted text-sm mb-8 text-center">
+        Enter PIN to access your review queue
+      </p>
+
+      <form
+        action={loginAction}
+        className="w-full max-w-xs space-y-4"
+      >
+        <input
+          type="password"
+          name="pin"
+          placeholder="Enter PIN"
+          autoComplete="current-password"
+          inputMode="numeric"
+          className="w-full px-4 py-4 text-center text-xl tracking-widest bg-background border-2 border-foreground rounded-lg focus:outline-none focus:ring-2 focus:ring-foreground font-mono"
+          required
+          autoFocus
+          disabled={isLocked}
+        />
 
         {hasError && (
           <p className="text-danger text-sm text-center">
@@ -63,25 +69,12 @@ function LoginForm() {
         </button>
       </form>
 
-      <p className="text-muted text-xs text-center mt-8 max-w-xs leading-relaxed" style={{ fontStyle: "italic" }}>
+      <p
+        className="text-muted text-xs text-center mt-8 max-w-xs leading-relaxed"
+        style={{ fontStyle: "italic" }}
+      >
         {message}
       </p>
-    </>
-  );
-}
-
-export default function LoginPage() {
-  return (
-    <div className="flex flex-col items-center justify-center min-h-[60vh]">
-      <p className="label mb-2">Second Brain</p>
-      <h1 className="text-2xl font-heading mb-1">Review Mode</h1>
-      <p className="text-muted text-sm mb-8">
-        Enter PIN to access your review queue
-      </p>
-
-      <Suspense>
-        <LoginForm />
-      </Suspense>
     </div>
   );
 }
