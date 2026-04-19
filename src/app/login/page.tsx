@@ -23,19 +23,31 @@ export default async function LoginPage({
   const message = messages[Math.floor(Math.random() * messages.length)];
 
   return (
-    <div className="flex flex-col items-center py-8 sm:py-16">
-      <p className="label mb-2">Second Brain</p>
-      <h1 className="text-2xl sm:text-3xl font-heading mb-1 text-center">
+    <div className="flex flex-col items-center text-center py-10 sm:py-20">
+      <p className="label mb-3">Second Brain</p>
+      <h1
+        className="font-heading tracking-tight"
+        style={{
+          fontSize: "2.5rem",
+          fontWeight: 400,
+          lineHeight: 1.1,
+          marginBottom: "0.75rem",
+        }}
+      >
         Review Mode
       </h1>
-      <p className="text-muted text-sm mb-8 text-center">
-        Enter PIN to access your review queue
+      <p
+        className="text-muted"
+        style={{
+          fontSize: "1rem",
+          marginBottom: "2.5rem",
+          maxWidth: "22rem",
+        }}
+      >
+        Enter your PIN to pick up where you left off.
       </p>
 
-      <form
-        action={loginAction}
-        className="w-full max-w-xs space-y-4"
-      >
+      <form action={loginAction} className="w-full max-w-xs space-y-4">
         <input
           type="password"
           name="pin"
@@ -70,8 +82,13 @@ export default async function LoginPage({
       </form>
 
       <p
-        className="text-muted text-xs text-center mt-8 max-w-xs leading-relaxed"
-        style={{ fontStyle: "italic" }}
+        className="text-muted leading-relaxed"
+        style={{
+          fontSize: "0.8125rem",
+          fontStyle: "italic",
+          marginTop: "2.5rem",
+          maxWidth: "22rem",
+        }}
       >
         {message}
       </p>

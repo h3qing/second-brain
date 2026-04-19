@@ -29,7 +29,6 @@ export default async function CardReview({
 
   const item = await parseReviewItem(currentPath, file.sha, file.content);
 
-  // Navigation comes from query params (set by the review queue page)
   const nextPath = params.next || null;
   const prevPath = params.prev || null;
   const position = params.pos || "";
@@ -48,122 +47,149 @@ export default async function CardReview({
   const folder =
     pathParts.length >= 3 ? pathParts.slice(0, -1).join(" / ") : pathParts[0];
 
+  const insightParagraphs = item.content
+    .replace(/^#\s+.+$/m, "")
+    .replace(/##\s*Source\s*Highlights?[\s\S]*?(?=\n##|$)/i, "")
+    .replace(/##\s*Source\s*Context[\s\S]*?(?=\n##|$)/i, "")
+    .replace(/##\s*Related\s*Concepts?[\s\S]*?(?=\n##|$)/i, "")
+    .replace(/!\[\[.*?\]\]/g, "")
+    .trim()
+    .split("\n")
+    .map((line) => line.trim())
+    .filter((line) => line !== "" && !line.startsWith("## "))
+    .map((line) => line.replace(/^[-*]\s*/, ""));
+
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
+    <article className="space-y-8">
+      {/* Top bar */}
+      <div className="flex items-center justify-between text-sm">
         <Link
           href="/review"
-          className="text-sm text-muted hover:text-foreground transition-colors"
+          className="text-muted hover:text-foreground transition-colors"
         >
           &larr; Queue
         </Link>
         {position && (
-          <span className="text-sm text-muted tabular-nums font-mono">
+          <span className="text-muted tabular-nums font-mono">
             {position}
           </span>
         )}
       </div>
 
-      {/* Card */}
-      <div className="border border-border rounded-lg p-6 space-y-5">
-        <div className="text-xs text-muted tracking-wide">{folder}</div>
-
-        <h1 className="text-2xl font-heading tracking-tight leading-tight">
+      {/* Title block */}
+      <header className="space-y-2">
+        <div className="label">{folder}</div>
+        <h1
+          className="font-heading tracking-tight leading-tight"
+          style={{ fontSize: "2rem", fontWeight: 400 }}
+        >
           {item.title}
         </h1>
+      </header>
 
-        {/* Original Highlights — first, so you read the source before the insight */}
-        {item.sourceHighlights.length > 0 && (
-          <div className="space-y-3">
-            <h2 className="label">Original Highlight</h2>
-            {item.sourceHighlights.map((h, i) => (
-              <blockquote
-                key={i}
-                className="border-l-2 border-accent pl-4 py-2"
-                style={{ background: "var(--highlight)" }}
-              >
-                <p className="text-sm italic leading-relaxed">{h.text}</p>
-                {h.location && (
-                  <p className="text-xs text-muted mt-1 font-mono">
-                    {h.location}
-                  </p>
-                )}
-              </blockquote>
-            ))}
-          </div>
-        )}
+      {/* Original Highlights */}
+      {item.sourceHighlights.length > 0 && (
+        <section className="space-y-3">
+          <h2 className="label">Original Highlight</h2>
+          {item.sourceHighlights.map((h, i) => (
+            <blockquote
+              key={i}
+              className="border-l-2 pl-5 py-2 read"
+              style={{
+                borderColor: "var(--ink-accent)",
+                background: "var(--highlight)",
+                fontStyle: "italic",
+              }}
+            >
+              <p>{h.text}</p>
+              {h.location && (
+                <p
+                  className="text-xs text-muted font-mono"
+                  style={{ marginTop: "0.5rem", fontStyle: "normal" }}
+                >
+                  {h.location}
+                </p>
+              )}
+            </blockquote>
+          ))}
+        </section>
+      )}
 
-        {/* Insight — the AI-extracted interpretation */}
-        <div className="border-t border-border pt-5 text-foreground leading-relaxed space-y-3">
-          <h2 className="label">Insight</h2>
-          {item.content
-            .replace(/^#\s+.+$/m, "")
-            .replace(/##\s*Source\s*Highlights?[\s\S]*?(?=\n##|$)/i, "")
-            .replace(/##\s*Source\s*Context[\s\S]*?(?=\n##|$)/i, "")
-            .replace(/##\s*Related\s*Concepts?[\s\S]*?(?=\n##|$)/i, "")
-            .replace(/!\[\[.*?\]\]/g, "")
-            .trim()
-            .split("\n")
-            .filter((line) => line.trim() !== "" && !line.startsWith("## "))
-            .map((line, i) => (
-              <p key={i} className="text-sm leading-relaxed">
-                {line.replace(/^[-*]\s*/, "")}
-              </p>
-            ))}
+      {/* Insight */}
+      <section className="space-y-3 pt-2">
+        <h2 className="label">Insight</h2>
+        <div className="read">
+          {insightParagraphs.map((line, i) => (
+            <p key={i} className={i === 0 ? "read-lede" : undefined}>
+              {line}
+            </p>
+          ))}
         </div>
+      </section>
 
-        {/* Source Context — timestamps, quotes from the original source */}
-        {item.sourceContext.length > 0 && (
-          <div className="space-y-3">
-            <h2 className="label">Source Context</h2>
-            {item.sourceContext.map((ctx, i) => (
-              <blockquote
-                key={i}
-                className="border-l-2 border-accent pl-4 py-2"
-                style={{ background: "var(--highlight)" }}
-              >
-                <p className="text-sm italic leading-relaxed">{ctx.quote}</p>
-                {ctx.timestampLabel && ctx.timestampUrl && (
-                  <a
-                    href={ctx.timestampUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-xs font-mono mt-1 inline-block"
-                    style={{ color: "var(--ink-accent)" }}
-                  >
-                    {ctx.timestampLabel}
-                  </a>
-                )}
-              </blockquote>
-            ))}
-          </div>
-        )}
+      {/* Source Context */}
+      {item.sourceContext.length > 0 && (
+        <section className="space-y-3">
+          <h2 className="label">Source Context</h2>
+          {item.sourceContext.map((ctx, i) => (
+            <blockquote
+              key={i}
+              className="border-l-2 pl-5 py-2 read"
+              style={{
+                borderColor: "var(--ink-accent)",
+                background: "var(--highlight)",
+                fontStyle: "italic",
+              }}
+            >
+              <p>{ctx.quote}</p>
+              {ctx.timestampLabel && ctx.timestampUrl && (
+                <a
+                  href={ctx.timestampUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-xs font-mono inline-block"
+                  style={{
+                    color: "var(--ink-accent)",
+                    marginTop: "0.5rem",
+                    fontStyle: "normal",
+                  }}
+                >
+                  {ctx.timestampLabel}
+                </a>
+              )}
+            </blockquote>
+          ))}
+        </section>
+      )}
 
-        {/* Related Concepts */}
-        {item.relatedConcepts.length > 0 && (
-          <div className="flex flex-wrap gap-2 pt-2">
+      {/* Related Concepts */}
+      {item.relatedConcepts.length > 0 && (
+        <section>
+          <h2 className="label mb-3">Related</h2>
+          <div style={{ marginRight: "-0.5rem", marginBottom: "-0.5rem" }}>
             {item.relatedConcepts.map((concept) => (
               <span
                 key={concept}
-                className="text-xs px-2 py-1 border border-border text-muted rounded-sm"
+                className="inline-block text-xs px-2.5 py-1 border border-border text-muted rounded-sm font-mono"
+                style={{ marginRight: "0.5rem", marginBottom: "0.5rem" }}
               >
                 {concept}
               </span>
             ))}
           </div>
-        )}
-      </div>
+        </section>
+      )}
 
-      {/* Action Buttons — pass SHA + rawContent so action skips the API read */}
-      {isReReview ? (
-        <div>
-          <p className="text-sm text-muted mb-3 text-center">
-            How well did you recall this?
-          </p>
-          <div className="flex gap-3">
-            {(["hard", "medium", "easy"] as const).map((difficulty) => (
-              <form key={difficulty} action={reviewAction} className="flex-1">
+      {/* Action buttons — stacked vertically so they render reliably on Kindle
+          and give a generous tap target on phone. Desktop users barely notice. */}
+      <div className="pt-2 space-y-3">
+        {isReReview ? (
+          <>
+            <p className="text-sm text-muted text-center">
+              How well did you recall this?
+            </p>
+            {(["easy", "medium", "hard"] as const).map((difficulty) => (
+              <form key={difficulty} action={reviewAction} className="block">
                 <input type="hidden" name="path" value={currentPath} />
                 <input type="hidden" name="action" value={difficulty} />
                 <input type="hidden" name="returnTo" value={nextForAction} />
@@ -177,33 +203,33 @@ export default async function CardReview({
                 </button>
               </form>
             ))}
-          </div>
-        </div>
-      ) : (
-        <div className="flex gap-3">
-          <form action={reviewAction} className="flex-1">
-            <input type="hidden" name="path" value={currentPath} />
-            <input type="hidden" name="action" value="approve" />
-            <input type="hidden" name="returnTo" value={nextForAction} />
-            <input type="hidden" name="sha" value={item.sha} />
-            <input type="hidden" name="rawContent" value={item.rawContent} />
-            <button type="submit" className="btn btn-approve w-full text-lg">
-              Approve
-            </button>
-          </form>
+          </>
+        ) : (
+          <>
+            <form action={reviewAction} className="block">
+              <input type="hidden" name="path" value={currentPath} />
+              <input type="hidden" name="action" value="approve" />
+              <input type="hidden" name="returnTo" value={nextForAction} />
+              <input type="hidden" name="sha" value={item.sha} />
+              <input type="hidden" name="rawContent" value={item.rawContent} />
+              <button type="submit" className="btn btn-approve w-full text-lg">
+                Approve
+              </button>
+            </form>
 
-          <form action={reviewAction} className="flex-1">
-            <input type="hidden" name="path" value={currentPath} />
-            <input type="hidden" name="action" value="contest" />
-            <input type="hidden" name="returnTo" value={nextForAction} />
-            <input type="hidden" name="sha" value={item.sha} />
-            <input type="hidden" name="rawContent" value={item.rawContent} />
-            <button type="submit" className="btn btn-contest w-full text-lg">
-              Contest
-            </button>
-          </form>
-        </div>
-      )}
+            <form action={reviewAction} className="block">
+              <input type="hidden" name="path" value={currentPath} />
+              <input type="hidden" name="action" value="contest" />
+              <input type="hidden" name="returnTo" value={nextForAction} />
+              <input type="hidden" name="sha" value={item.sha} />
+              <input type="hidden" name="rawContent" value={item.rawContent} />
+              <button type="submit" className="btn btn-contest w-full text-lg">
+                Contest
+              </button>
+            </form>
+          </>
+        )}
+      </div>
 
       {nextPath && (
         <div className="text-center">
@@ -216,8 +242,10 @@ export default async function CardReview({
         </div>
       )}
 
-      {/* Navigation */}
-      <div className="flex justify-between pt-4 border-t border-border">
+      {/* Prev / Next nav */}
+      <nav
+        className="flex items-center justify-between pt-5 border-t border-border"
+      >
         {prevPath ? (
           <Link
             href={`/review/card?path=${encodeURIComponent(prevPath)}`}
@@ -226,7 +254,7 @@ export default async function CardReview({
             &larr; Prev
           </Link>
         ) : (
-          <div />
+          <span />
         )}
         {nextPath ? (
           <Link
@@ -240,7 +268,7 @@ export default async function CardReview({
             Done
           </Link>
         )}
-      </div>
-    </div>
+      </nav>
+    </article>
   );
 }

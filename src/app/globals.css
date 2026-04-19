@@ -7,7 +7,7 @@
   --ink-accent: #b8845a;
   --ink-accent-hover: #a6744c;
   --ink-paper: #ffffff;
-  --ink-border: #d4d4d4;
+  --ink-border: #a3a3a3;
   --ink-ink: #000000;
 
   /* Mapped for component convenience */
@@ -44,7 +44,7 @@
     --ink-accent: #c49a6c;
     --ink-accent-hover: #d4aa7c;
     --ink-paper: #000000;
-    --ink-border: #404040;
+    --ink-border: #525252;
     --ink-ink: #ffffff;
 
     --card: #171717;
@@ -167,6 +167,24 @@ a {
   background: var(--highlight);
   border-radius: 2px;
   padding: 8px 0;
+}
+
+/* Long-form reading: Crimson Pro at book-like size & rhythm.
+   Used for insights and highlighted quotes on review cards. */
+.read {
+  font-family: var(--font-body), Georgia, serif;
+  font-size: 1.0625rem;
+  line-height: 1.7;
+}
+
+.read p + p {
+  margin-top: 0.9em;
+}
+
+.read-lede {
+  font-size: 1.125rem;
+  line-height: 1.65;
+  color: var(--ink-ink);
 }
 
 /* Prose styling for rendered markdown */

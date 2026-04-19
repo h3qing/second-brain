@@ -99,19 +99,74 @@ function ItemRow({
   return (
     <Link
       href={href}
-      className="flex flex-col md:flex-row md:items-center gap-1 md:gap-4 py-3 border-b border-border hover:bg-card px-2 -mx-2 rounded transition-colors"
+      className="block py-4 border-b border-border hover:bg-card px-2 -mx-2 rounded transition-colors"
     >
-      <span className="text-sm text-muted tabular-nums w-8 shrink-0">
-        {index + 1}
-      </span>
-      <span className="flex-1 font-medium tracking-tight">{item.title}</span>
-      <span className="text-sm text-muted">{item.folder}</span>
-      {item.source && (
-        <span className="text-xs text-muted truncate max-w-[200px]">
-          {item.source}
+      <div className="flex items-baseline">
+        <span className="text-sm text-muted tabular-nums w-8 shrink-0 font-mono">
+          {index + 1}.
         </span>
-      )}
+        <span className="flex-1 font-medium tracking-tight text-base leading-snug">
+          {item.title}
+        </span>
+      </div>
+      <div className="mt-1 pl-8 text-xs text-muted">
+        <span>{item.folder}</span>
+        {item.source && (
+          <>
+            <span className="mx-1.5">&middot;</span>
+            <span>{item.source}</span>
+          </>
+        )}
+      </div>
     </Link>
+  );
+}
+
+function Stat({ count, label }: { count: number; label: string }) {
+  return (
+    <div className="inline-block" style={{ marginRight: "2rem", marginBottom: "0.5rem" }}>
+      <div className="text-3xl font-heading leading-none">{count}</div>
+      <div className="label mt-1.5">{label}</div>
+    </div>
+  );
+}
+
+function Section({
+  title,
+  count,
+  items,
+  mode,
+  tone,
+}: {
+  title: string;
+  count: number;
+  items: QueueItem[];
+  mode?: string;
+  tone?: "accent" | "danger" | "muted";
+}) {
+  const toneStyle =
+    tone === "danger"
+      ? { color: "var(--danger)" }
+      : tone === "muted"
+      ? { color: "var(--ink-muted)" }
+      : { color: "var(--ink-accent)" };
+  return (
+    <section>
+      <h2 className="label mb-3" style={toneStyle}>
+        {title} ({count})
+      </h2>
+      <div>
+        {items.map((item, i) => (
+          <ItemRow
+            key={item.path}
+            item={item}
+            index={i}
+            items={items}
+            mode={mode}
+          />
+        ))}
+      </div>
+    </section>
   );
 }
 
@@ -123,96 +178,68 @@ export default async function ReviewQueue() {
     await getReviewItems();
 
   return (
-    <div className="space-y-8">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-heading tracking-tight">Review Queue</h1>
-        {unreviewed.length > 0 && (
-          <Link
-            href={buildCardUrl(unreviewed, 0, unreviewed.length)}
-            className="btn bg-foreground text-background border-foreground text-sm"
-          >
-            Start Reviewing
-          </Link>
-        )}
-      </div>
+    <div className="space-y-10">
+      <header className="space-y-5">
+        <div className="flex items-center justify-between">
+          <h1 className="text-3xl sm:text-4xl font-heading tracking-tight">
+            Review Queue
+          </h1>
+          {unreviewed.length > 0 && (
+            <Link
+              href={buildCardUrl(unreviewed, 0, unreviewed.length)}
+              className="btn bg-foreground text-background border-foreground text-sm whitespace-nowrap"
+              style={{ marginLeft: "1rem" }}
+            >
+              Start Reviewing
+            </Link>
+          )}
+        </div>
 
-      <div className="flex gap-6 text-sm flex-wrap">
-        <div>
-          <span className="text-2xl font-heading">{unreviewed.length}</span>
-          <span className="text-muted ml-1">unreviewed</span>
+        <div className="flex flex-wrap">
+          <Stat count={unreviewed.length} label="unreviewed" />
+          {dueForReview.length > 0 && (
+            <Stat count={dueForReview.length} label="due again" />
+          )}
+          <Stat count={contested.length} label="contested" />
+          <Stat count={reviewed.length} label="reviewed" />
         </div>
-        {dueForReview.length > 0 && (
-          <div>
-            <span className="text-2xl font-heading">{dueForReview.length}</span>
-            <span className="text-muted ml-1">due for re-review</span>
-          </div>
-        )}
-        <div>
-          <span className="text-2xl font-heading">{contested.length}</span>
-          <span className="text-muted ml-1">contested</span>
-        </div>
-        <div>
-          <span className="text-2xl font-heading">{reviewed.length}</span>
-          <span className="text-muted ml-1">reviewed</span>
-        </div>
-      </div>
+      </header>
 
       {unreviewed.length > 0 && (
-        <div>
-          <h2 className="label text-accent mb-3">
-            Needs Review ({unreviewed.length})
-          </h2>
-          <div>
-            {unreviewed.map((item, i) => (
-              <ItemRow key={item.path} item={item} index={i} items={unreviewed} />
-            ))}
-          </div>
-        </div>
+        <Section
+          title="Needs Review"
+          count={unreviewed.length}
+          items={unreviewed}
+          tone="accent"
+        />
       )}
 
       {dueForReview.length > 0 && (
-        <div>
-          <h2 className="label mb-3" style={{ color: "var(--ink-accent)" }}>
-            Review Again ({dueForReview.length})
-          </h2>
-          <div>
-            {dueForReview.map((item, i) => (
-              <ItemRow
-                key={item.path}
-                item={item}
-                index={i}
-                items={dueForReview}
-                mode="rereview"
-              />
-            ))}
-          </div>
-        </div>
+        <Section
+          title="Review Again"
+          count={dueForReview.length}
+          items={dueForReview}
+          mode="rereview"
+          tone="accent"
+        />
       )}
 
       {contested.length > 0 && (
-        <div>
-          <h2 className="label text-danger mb-3">
-            Contested ({contested.length})
-          </h2>
-          <div>
-            {contested.map((item, i) => (
-              <ItemRow key={item.path} item={item} index={i} items={contested} />
-            ))}
-          </div>
-        </div>
+        <Section
+          title="Contested"
+          count={contested.length}
+          items={contested}
+          tone="danger"
+        />
       )}
 
       {reviewed.length > 0 && (
-        <div>
-          <h2 className="label text-muted mb-3">
-            Reviewed ({reviewed.length})
-          </h2>
-          <div>
-            {reviewed.slice(0, 10).map((item, i) => (
-              <ItemRow key={item.path} item={item} index={i} items={reviewed.slice(0, 10)} />
-            ))}
-          </div>
-        </div>
+        <Section
+          title="Reviewed"
+          count={reviewed.length}
+          items={reviewed.slice(0, 10)}
+          tone="muted"
+        />
       )}
 
       {unreviewed.length === 0 && contested.length === 0 && (
