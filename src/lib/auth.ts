@@ -3,7 +3,8 @@ import bcrypt from "bcryptjs";
 import { createHmac, timingSafeEqual } from "crypto";
 
 const SESSION_COOKIE = "secondbrain-session";
-const SESSION_DURATION = 30 * 24 * 60 * 60; // 30 days
+const SESSION_TTL_DAYS = 14;
+const SESSION_TTL_SECONDS = SESSION_TTL_DAYS * 24 * 60 * 60;
 
 // In-memory rate limiting (resets on cold start, fine for single-user)
 const loginAttempts = new Map<string, { count: number; resetAt: number }>();
@@ -63,38 +64,49 @@ export async function verifyPin(pin: string): Promise<boolean> {
   return bcrypt.compare(pin, hash);
 }
 
-// Session token — HMAC (fast, runs on every authenticated request)
-function computeSessionToken(): string {
+// Session token — HMAC with embedded expiry (fast, runs on every authenticated request)
+function signToken(expiresAt: number): string {
   const pinHash = process.env.AUTH_PIN_HASH || "";
-  return createHmac("sha256", pinHash)
-    .update("secondbrain-session-v1")
-    .digest("hex");
+  const payload = `${expiresAt}:secondbrain-session-v2`;
+  const signature = createHmac("sha256", pinHash).update(payload).digest("hex");
+  return `${expiresAt}:${signature}`;
+}
+
+function verifyToken(token: string): boolean {
+  const colonIdx = token.indexOf(":");
+  if (colonIdx === -1) return false;
+
+  const expiresAt = parseInt(token.slice(0, colonIdx), 10);
+  if (isNaN(expiresAt)) return false;
+
+  // Check expiry
+  if (Date.now() > expiresAt) return false;
+
+  // Verify signature
+  const expected = signToken(expiresAt);
+  try {
+    return timingSafeEqual(Buffer.from(token), Buffer.from(expected));
+  } catch {
+    return false;
+  }
 }
 
 export async function verifySession(): Promise<boolean> {
   const cookieStore = await cookies();
   const session = cookieStore.get(SESSION_COOKIE);
   if (!session) return false;
-
-  const expected = computeSessionToken();
-  try {
-    return timingSafeEqual(
-      Buffer.from(session.value),
-      Buffer.from(expected)
-    );
-  } catch {
-    return false;
-  }
+  return verifyToken(session.value);
 }
 
 export async function createSession(): Promise<void> {
-  const token = computeSessionToken();
+  const expiresAt = Date.now() + SESSION_TTL_SECONDS * 1000;
+  const token = signToken(expiresAt);
   const cookieStore = await cookies();
   cookieStore.set(SESSION_COOKIE, token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
-    maxAge: SESSION_DURATION,
+    maxAge: SESSION_TTL_SECONDS,
     path: "/",
   });
 }

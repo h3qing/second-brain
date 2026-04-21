@@ -1,4 +1,4 @@
-import { listFiles, getFileContent } from "./github";
+import { listFiles, getFileContent, getFilesContent } from "./github";
 import { parseFrontmatter, extractTitle } from "./parser";
 import { remark } from "remark";
 import remarkHtml from "remark-html";
@@ -14,21 +14,19 @@ export interface FileEntry {
   slug: string;
 }
 
-// Build a file index for wikilink resolution
+// Build a file index for wikilink resolution (uses tree API — fast)
 export async function buildFileIndex(): Promise<Map<string, FileEntry>> {
-  const conceptPaths = await listFiles("30 Concept", "force-cache");
-  const ideaPaths = await listFiles("20 Ideas", "force-cache");
+  const [conceptPaths, ideaPaths] = await Promise.all([
+    listFiles("30 Concept", "force-cache"),
+    listFiles("20 Ideas", "force-cache"),
+  ]);
 
   const index = new Map<string, FileEntry>();
 
   for (const path of conceptPaths) {
     const filename = path.split("/").pop()?.replace(".md", "") || "";
     const slug = slugify(filename);
-    index.set(filename.toLowerCase(), {
-      path,
-      filename,
-      slug,
-    });
+    index.set(filename.toLowerCase(), { path, filename, slug });
   }
 
   for (const path of ideaPaths) {
@@ -36,11 +34,7 @@ export async function buildFileIndex(): Promise<Map<string, FileEntry>> {
     const slug = slugify(filename);
     // Concepts take priority in disambiguation
     if (!index.has(filename.toLowerCase())) {
-      index.set(filename.toLowerCase(), {
-        path,
-        filename,
-        slug,
-      });
+      index.set(filename.toLowerCase(), { path, filename, slug });
     }
   }
 
@@ -61,7 +55,6 @@ function resolveWikilinks(
 
       if (!entry) return display;
 
-      // Determine URL based on path
       if (entry.path.startsWith("30 Concept/")) {
         return `<a href="/concepts/${entry.slug}" class="wikilink">${display}</a>`;
       }
@@ -80,13 +73,11 @@ export async function renderMarkdown(
   fileIndex: Map<string, FileEntry>
 ): Promise<string> {
   const withLinks = resolveWikilinks(content, fileIndex);
-
   const result = await remark().use(remarkGfm).use(remarkHtml, { sanitize: false }).process(withLinks);
-
   return result.toString();
 }
 
-// Find a concept file by slug
+// Find a concept file by slug (direct path construction, no scanning)
 export async function findConceptBySlug(slug: string): Promise<{
   path: string;
   content: string;
@@ -94,29 +85,26 @@ export async function findConceptBySlug(slug: string): Promise<{
   title: string;
   bodyHtml: string;
 } | null> {
-  const conceptPaths = await listFiles("30 Concept", "force-cache");
   const fileIndex = await buildFileIndex();
 
-  for (const path of conceptPaths) {
-    const filename = path.split("/").pop()?.replace(".md", "") || "";
-    if (slugify(filename) !== slug) continue;
+  // Direct lookup: find entry matching slug in concepts
+  for (const entry of fileIndex.values()) {
+    if (entry.slug === slug && entry.path.startsWith("30 Concept/")) {
+      const file = await getFileContent(entry.path, "force-cache");
+      if (!file) return null;
 
-    const file = await getFileContent(path, "force-cache");
-    if (!file) continue;
+      const { frontmatter, content } = parseFrontmatter(file.content);
+      const title = extractTitle(content, entry.path);
+      const bodyHtml = await renderMarkdown(content, fileIndex);
 
-    const { frontmatter, content } = parseFrontmatter(file.content);
-
-    // Concepts are always public (structural wiki pages)
-    const title = extractTitle(content, path);
-    const bodyHtml = await renderMarkdown(content, fileIndex);
-
-    return { path, content, frontmatter, title, bodyHtml };
+      return { path: entry.path, content, frontmatter, title, bodyHtml };
+    }
   }
 
   return null;
 }
 
-// Find an idea file by slug
+// Find an idea file by slug (direct lookup, no scanning)
 export async function findIdeaBySlug(slug: string): Promise<{
   path: string;
   content: string;
@@ -124,26 +112,21 @@ export async function findIdeaBySlug(slug: string): Promise<{
   title: string;
   bodyHtml: string;
 } | null> {
-  const ideaPaths = await listFiles("20 Ideas", "force-cache");
   const fileIndex = await buildFileIndex();
 
-  for (const path of ideaPaths) {
-    const filename = path.split("/").pop()?.replace(".md", "") || "";
-    if (slugify(filename) !== slug) continue;
+  for (const entry of fileIndex.values()) {
+    if (entry.slug === slug && entry.path.startsWith("20 Ideas/")) {
+      const file = await getFileContent(entry.path, "force-cache");
+      if (!file) return null;
 
-    const file = await getFileContent(path, "force-cache");
-    if (!file) continue;
+      const { frontmatter, content } = parseFrontmatter(file.content);
+      if (frontmatter.review_status !== "reviewed") return null;
 
-    const { frontmatter, content } = parseFrontmatter(file.content);
+      const title = extractTitle(content, entry.path);
+      const bodyHtml = await renderMarkdown(content, fileIndex);
 
-    if (frontmatter.review_status !== "reviewed") {
-      return null;
+      return { path: entry.path, content, frontmatter, title, bodyHtml };
     }
-
-    const title = extractTitle(content, path);
-    const bodyHtml = await renderMarkdown(content, fileIndex);
-
-    return { path, content, frontmatter, title, bodyHtml };
   }
 
   return null;

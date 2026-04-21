@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { verifySession } from "@/lib/auth";
-import { listFiles, getFileContent } from "@/lib/github";
+import { listFiles, getFilesContent } from "@/lib/github";
 import { parseFrontmatter, extractTitle } from "@/lib/parser";
 
 interface QueueItem {
@@ -20,18 +20,20 @@ async function getReviewItems(): Promise<{
   reviewed: QueueItem[];
   dueForReview: QueueItem[];
 }> {
-  const dirs = ["20 Ideas", "30 Concept"];
-  const allPaths: string[] = [];
+  // List files from tree (1 API call)
+  const [ideaPaths, conceptPaths] = await Promise.all([
+    listFiles("20 Ideas"),
+    listFiles("30 Concept"),
+  ]);
+  const allPaths = [...ideaPaths, ...conceptPaths];
 
-  for (const dir of dirs) {
-    const paths = await listFiles(dir);
-    allPaths.push(...paths);
-  }
+  // Fetch all content in parallel
+  const files = await getFilesContent(allPaths);
 
   const items: QueueItem[] = [];
 
   for (const path of allPaths) {
-    const file = await getFileContent(path);
+    const file = files.get(path);
     if (!file) continue;
 
     const { frontmatter, content } = parseFrontmatter(file.content);

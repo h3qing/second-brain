@@ -1,4 +1,4 @@
-import { listFiles, getFileContent } from "./github";
+import { listFiles, getFilesContent } from "./github";
 import { parseFrontmatter, extractTitle } from "./parser";
 
 export interface GraphNode {
@@ -37,22 +37,27 @@ function slugify(name: string): string {
 }
 
 export async function buildGraphData(): Promise<GraphData> {
-  // Fetch concept and idea files
-  const conceptPaths = await listFiles("30 Concept", "force-cache");
-  const ideaPaths = await listFiles("20 Ideas", "force-cache");
+  // List files (uses tree API — 1 call)
+  const [conceptPaths, ideaPaths] = await Promise.all([
+    listFiles("30 Concept", "force-cache"),
+    listFiles("20 Ideas", "force-cache"),
+  ]);
+
+  // Fetch all content in parallel
+  const allPaths = [...conceptPaths, ...ideaPaths];
+  const files = await getFilesContent(allPaths, "force-cache");
 
   const nodes: GraphNode[] = [];
   const links: GraphLink[] = [];
   const tagCounts: Record<string, number> = {};
   const fileIndex = new Map<string, string>(); // filename -> node id
 
-  // Process concepts — always public (structural wiki pages, not AI-generated)
+  // Single pass: parse content, build nodes, extract links
   for (const path of conceptPaths) {
-    const file = await getFileContent(path, "force-cache");
+    const file = files.get(path);
     if (!file) continue;
 
     const { frontmatter, content } = parseFrontmatter(file.content);
-
     const title = extractTitle(content, path);
     const filename = path.split("/").pop()?.replace(".md", "") || "";
     const id = `concept:${slugify(filename)}`;
@@ -85,16 +90,12 @@ export async function buildGraphData(): Promise<GraphData> {
     fileIndex.set(filename.toLowerCase(), id);
   }
 
-  // Process ideas (only reviewed)
   for (const path of ideaPaths) {
-    const file = await getFileContent(path, "force-cache");
+    const file = files.get(path);
     if (!file) continue;
 
     const { frontmatter, content } = parseFrontmatter(file.content);
-
-    if (frontmatter.review_status !== "reviewed") {
-      continue;
-    }
+    if (frontmatter.review_status !== "reviewed") continue;
 
     const title = extractTitle(content, path);
     const filename = path.split("/").pop()?.replace(".md", "") || "";
@@ -127,18 +128,17 @@ export async function buildGraphData(): Promise<GraphData> {
     fileIndex.set(filename.toLowerCase(), id);
   }
 
-  // Extract wikilinks and build edges
-  const allPaths = [...conceptPaths, ...ideaPaths];
+  // Extract wikilinks from already-fetched content (no re-fetching)
   for (const path of allPaths) {
-    const file = await getFileContent(path, "force-cache");
+    const file = files.get(path);
     if (!file) continue;
 
     const filename = path.split("/").pop()?.replace(".md", "") || "";
     const sourceId = fileIndex.get(filename.toLowerCase());
     if (!sourceId) continue;
 
-    let match;
     WIKILINK_RE.lastIndex = 0;
+    let match;
     while ((match = WIKILINK_RE.exec(file.content)) !== null) {
       const linkTarget = match[1].split("/").pop() || match[1];
       const targetId = fileIndex.get(linkTarget.toLowerCase());
