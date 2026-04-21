@@ -186,6 +186,31 @@ export async function parseReviewItem(
   };
 }
 
+export function replaceInsight(rawContent: string, newInsight: string): string {
+  const { data, content } = matter(rawContent);
+  const updated = { ...data, origin: "ai-assisted" };
+
+  // Replace the ## Insight section content, preserving everything else
+  const insightRegex = /(##\s*Insight\s*\n)([\s\S]*?)(?=\n##|$)/i;
+  const match = content.match(insightRegex);
+  if (match) {
+    const replaced = content.replace(insightRegex, `$1${newInsight.trim()}\n`);
+    return matter.stringify(replaced, updated);
+  }
+
+  // No existing ## Insight section — insert after the H1
+  const h1End = content.match(/^#\s+.+$/m);
+  if (h1End) {
+    const idx = content.indexOf(h1End[0]) + h1End[0].length;
+    const before = content.slice(0, idx);
+    const after = content.slice(idx);
+    const inserted = `${before}\n\n## Insight\n${newInsight.trim()}\n${after}`;
+    return matter.stringify(inserted, updated);
+  }
+
+  return matter.stringify(content, updated);
+}
+
 export type Difficulty = "easy" | "medium" | "hard";
 
 const DIFFICULTY_MULTIPLIER: Record<Difficulty, number> = {

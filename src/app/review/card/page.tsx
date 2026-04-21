@@ -3,7 +3,7 @@ import Link from "next/link";
 import { verifySession } from "@/lib/auth";
 import { getFileContent } from "@/lib/github";
 import { parseReviewItem } from "@/lib/parser";
-import { reviewAction } from "@/app/review/action";
+import { ReviewCardForm } from "./insight-editor";
 
 export default async function CardReview({
   searchParams,
@@ -47,13 +47,14 @@ export default async function CardReview({
   const folder =
     pathParts.length >= 3 ? pathParts.slice(0, -1).join(" / ") : pathParts[0];
 
-  const insightParagraphs = item.content
-    .replace(/^#\s+.+$/m, "")
-    .replace(/##\s*Source\s*Highlights?[\s\S]*?(?=\n##|$)/i, "")
-    .replace(/##\s*Source\s*Context[\s\S]*?(?=\n##|$)/i, "")
-    .replace(/##\s*Related\s*Concepts?[\s\S]*?(?=\n##|$)/i, "")
+  // Extract the raw insight text (for persisting edits)
+  const insightMatch = item.content.match(
+    /##\s*Insight\s*\n([\s\S]*?)(?=\n##|$)/i
+  );
+  const aiInsight = insightMatch ? insightMatch[1].trim() : "";
+
+  const insightParagraphs = aiInsight
     .replace(/!\[\[.*?\]\]/g, "")
-    .trim()
     .split("\n")
     .map((line) => line.trim())
     .filter((line) => line !== "" && !line.startsWith("## "))
@@ -115,17 +116,16 @@ export default async function CardReview({
         </section>
       )}
 
-      {/* Insight */}
-      <section className="space-y-3 pt-2">
-        <h2 className="label">Insight</h2>
-        <div className="read">
-          {insightParagraphs.map((line, i) => (
-            <p key={i} className={i === 0 ? "read-lede" : undefined}>
-              {line}
-            </p>
-          ))}
-        </div>
-      </section>
+      {/* Insight editor + Action buttons (client component) */}
+      <ReviewCardForm
+        currentPath={currentPath}
+        sha={item.sha}
+        rawContent={item.rawContent}
+        returnTo={nextForAction}
+        isReReview={isReReview}
+        aiInsight={aiInsight}
+        insightParagraphs={insightParagraphs}
+      />
 
       {/* Source Context */}
       {item.sourceContext.length > 0 && (
@@ -179,59 +179,6 @@ export default async function CardReview({
           </div>
         </section>
       )}
-
-      {/* Action buttons — side-by-side on laptop/phone, stacks on Kindle
-          via .action-row's @media (monochrome) override. */}
-      <div className="pt-2">
-        {isReReview ? (
-          <>
-            <p className="text-sm text-muted text-center mb-3">
-              How well did you recall this?
-            </p>
-            <div className="action-row">
-              {(["easy", "medium", "hard"] as const).map((difficulty) => (
-                <form key={difficulty} action={reviewAction}>
-                  <input type="hidden" name="path" value={currentPath} />
-                  <input type="hidden" name="action" value={difficulty} />
-                  <input type="hidden" name="returnTo" value={nextForAction} />
-                  <input type="hidden" name="sha" value={item.sha} />
-                  <input type="hidden" name="rawContent" value={item.rawContent} />
-                  <button
-                    type="submit"
-                    className={`btn btn-${difficulty} w-full text-lg capitalize`}
-                  >
-                    {difficulty}
-                  </button>
-                </form>
-              ))}
-            </div>
-          </>
-        ) : (
-          <div className="action-row">
-            <form action={reviewAction}>
-              <input type="hidden" name="path" value={currentPath} />
-              <input type="hidden" name="action" value="approve" />
-              <input type="hidden" name="returnTo" value={nextForAction} />
-              <input type="hidden" name="sha" value={item.sha} />
-              <input type="hidden" name="rawContent" value={item.rawContent} />
-              <button type="submit" className="btn btn-approve w-full text-lg">
-                Approve
-              </button>
-            </form>
-
-            <form action={reviewAction}>
-              <input type="hidden" name="path" value={currentPath} />
-              <input type="hidden" name="action" value="contest" />
-              <input type="hidden" name="returnTo" value={nextForAction} />
-              <input type="hidden" name="sha" value={item.sha} />
-              <input type="hidden" name="rawContent" value={item.rawContent} />
-              <button type="submit" className="btn btn-contest w-full text-lg">
-                Contest
-              </button>
-            </form>
-          </div>
-        )}
-      </div>
 
       {nextPath && (
         <div className="text-center">

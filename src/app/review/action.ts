@@ -6,6 +6,7 @@ import { getFileContent, updateFile } from "@/lib/github";
 import {
   updateReviewStatus,
   updateSpacedRepetition,
+  replaceInsight,
   type Difficulty,
 } from "@/lib/parser";
 
@@ -18,6 +19,8 @@ export async function reviewAction(formData: FormData) {
   const returnTo = formData.get("returnTo") as string;
   const sha = formData.get("sha") as string;
   const rawContent = formData.get("rawContent") as string;
+  const customInsight = formData.get("customInsight") as string | null;
+  const insightChanged = formData.get("insightChanged") === "true";
 
   if (!path || !action) redirect("/review");
 
@@ -29,16 +32,21 @@ export async function reviewAction(formData: FormData) {
   let updatedContent: string;
   const slug = path.split("/").pop()?.replace(".md", "") || "unknown";
 
+  // Apply custom insight to source before review status update
+  const applyInsight = (source: string): string =>
+    insightChanged && customInsight
+      ? replaceInsight(source, customInsight)
+      : source;
+
   if (isSR) {
-    // Spaced repetition re-review
     const source = rawContent || (await getFileContent(path))?.content;
     if (!source) redirect("/review");
-    updatedContent = updateSpacedRepetition(source!, action as Difficulty, today);
+    updatedContent = updateSpacedRepetition(applyInsight(source!), action as Difficulty, today);
   } else if (action === "approve" || action === "contest") {
     const status = action === "approve" ? "reviewed" : "contested";
     const source = rawContent || (await getFileContent(path))?.content;
     if (!source) redirect("/review");
-    updatedContent = updateReviewStatus(source!, status, today);
+    updatedContent = updateReviewStatus(applyInsight(source!), status, today);
   } else {
     redirect(returnTo || "/review");
     return;
@@ -54,10 +62,11 @@ export async function reviewAction(formData: FormData) {
       // SHA was stale, re-read and retry once
       const freshFile = await getFileContent(path);
       if (freshFile) {
+        const base = applyInsight(freshFile.content);
         const freshSource = isSR
-          ? updateSpacedRepetition(freshFile.content, action as Difficulty, today)
+          ? updateSpacedRepetition(base, action as Difficulty, today)
           : updateReviewStatus(
-              freshFile.content,
+              base,
               action === "approve" ? "reviewed" : "contested",
               today
             );
@@ -68,10 +77,11 @@ export async function reviewAction(formData: FormData) {
     // Fallback: read from API
     const file = await getFileContent(path);
     if (!file) redirect("/review");
+    const base = applyInsight(file!.content);
     const freshContent = isSR
-      ? updateSpacedRepetition(file!.content, action as Difficulty, today)
+      ? updateSpacedRepetition(base, action as Difficulty, today)
       : updateReviewStatus(
-          file!.content,
+          base,
           action === "approve" ? "reviewed" : "contested",
           today
         );

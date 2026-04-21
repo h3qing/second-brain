@@ -215,6 +215,57 @@ a {
 }
 
 /* Prose styling for rendered markdown */
+/* Insight editor — toggle & textarea */
+.insight-toggle {
+  font-size: 0.75rem;
+  font-family: var(--font-mono);
+  color: var(--ink-accent);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px 0;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  text-decoration-color: var(--ink-border);
+  transition: text-decoration-color 0.15s;
+}
+
+.insight-toggle:hover {
+  text-decoration-color: var(--ink-accent);
+}
+
+.insight-textarea {
+  width: 100%;
+  min-height: 120px;
+  padding: 12px 16px;
+  font-family: var(--font-body), Georgia, serif;
+  font-size: 1.0625rem;
+  line-height: 1.7;
+  color: var(--ink-text);
+  background: var(--highlight);
+  border: 2px solid var(--ink-border);
+  border-radius: 6px;
+  resize: vertical;
+  transition: border-color 0.15s;
+}
+
+.insight-textarea:focus {
+  outline: none;
+  border-color: var(--ink-accent);
+}
+
+.insight-textarea::placeholder {
+  color: var(--ink-muted);
+  font-style: italic;
+}
+
+@media (monochrome) {
+  .insight-textarea {
+    border-width: 2px;
+  }
+}
+
+/* Prose styling for rendered markdown */
 .prose-warm h1,
 .prose-warm h2,
 .prose-warm h3 {
