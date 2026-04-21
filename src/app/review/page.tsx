@@ -1,8 +1,8 @@
-import { redirect } from "next/navigation";
 import Link from "next/link";
 import { verifySession } from "@/lib/auth";
 import { listFiles, getFilesContent } from "@/lib/github";
 import { parseFrontmatter, extractTitle } from "@/lib/parser";
+import { ReviewStats } from "@/app/components/ReviewStats";
 
 interface QueueItem {
   path: string;
@@ -174,10 +174,16 @@ function Section({
 
 export default async function ReviewQueue() {
   const isLoggedIn = await verifySession();
-  if (!isLoggedIn) redirect("/login");
 
   const { unreviewed, contested, reviewed, dueForReview } =
     await getReviewItems();
+
+  const startHref = isLoggedIn
+    ? unreviewed.length > 0
+      ? buildCardUrl(unreviewed, 0, unreviewed.length)
+      : null
+    : "/login";
+  const startCta = isLoggedIn ? "Start Reviewing" : "Sign in to review";
 
   return (
     <div className="space-y-10">
@@ -186,16 +192,22 @@ export default async function ReviewQueue() {
           <h1 className="text-3xl sm:text-4xl font-heading tracking-tight">
             Review Queue
           </h1>
-          {unreviewed.length > 0 && (
+          {startHref && (
             <Link
-              href={buildCardUrl(unreviewed, 0, unreviewed.length)}
+              href={startHref}
               className="btn bg-foreground text-background border-foreground text-sm whitespace-nowrap"
               style={{ marginLeft: "1rem" }}
             >
-              Start Reviewing
+              {startCta}
             </Link>
           )}
         </div>
+
+        {!isLoggedIn && (
+          <p className="text-sm text-muted">
+            Browsing as a guest. Queue is read-only — sign in to approve or contest items.
+          </p>
+        )}
 
         <div className="flex flex-wrap">
           <Stat count={unreviewed.length} label="unreviewed" />
@@ -206,6 +218,8 @@ export default async function ReviewQueue() {
           <Stat count={reviewed.length} label="reviewed" />
         </div>
       </header>
+
+      {isLoggedIn && <ReviewStats />}
 
       {unreviewed.length > 0 && (
         <Section

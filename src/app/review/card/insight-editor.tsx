@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { reviewAction } from "@/app/review/action";
 
 interface ReviewCardFormProps {
@@ -11,6 +12,7 @@ interface ReviewCardFormProps {
   isReReview: boolean;
   aiInsight: string;
   insightParagraphs: string[];
+  isLoggedIn: boolean;
 }
 
 export function ReviewCardForm({
@@ -21,6 +23,7 @@ export function ReviewCardForm({
   isReReview,
   aiInsight,
   insightParagraphs,
+  isLoggedIn,
 }: ReviewCardFormProps) {
   const [mode, setMode] = useState<"ai" | "custom">("ai");
   const [customText, setCustomText] = useState("");
@@ -34,13 +37,15 @@ export function ReviewCardForm({
       <section className="space-y-3 pt-2">
         <div className="flex items-center justify-between">
           <h2 className="label">Insight</h2>
-          <button
-            type="button"
-            className="insight-toggle"
-            onClick={() => setMode(mode === "ai" ? "custom" : "ai")}
-          >
-            {mode === "ai" ? "Write your own" : "Use AI insight"}
-          </button>
+          {isLoggedIn && (
+            <button
+              type="button"
+              className="insight-toggle"
+              onClick={() => setMode(mode === "ai" ? "custom" : "ai")}
+            >
+              {mode === "ai" ? "Write your own" : "Use AI insight"}
+            </button>
+          )}
         </div>
 
         {mode === "ai" ? (
@@ -64,7 +69,14 @@ export function ReviewCardForm({
 
       {/* Action buttons — single form per button, each carrying insight data */}
       <div className="pt-2">
-        {isReReview ? (
+        {!isLoggedIn ? (
+          <Link
+            href="/login"
+            className="btn w-full bg-foreground text-background border-foreground text-lg"
+          >
+            Sign in to review &rarr;
+          </Link>
+        ) : isReReview ? (
           <>
             <p className="text-sm text-muted text-center mb-3">
               How well did you recall this?

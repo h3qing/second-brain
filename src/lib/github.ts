@@ -105,6 +105,45 @@ export async function getFilesContent(
   return results;
 }
 
+// --- Commit history ---
+
+export interface CommitSummary {
+  message: string;
+  date: string; // ISO timestamp from author.date
+}
+
+let commitCache: { commits: CommitSummary[]; fetchedAt: number } | null = null;
+const COMMIT_CACHE_TTL = 5 * 60_000; // 5 min
+
+// Fetch recent commits, paginating up to `maxPages` * 100 items.
+export async function listCommits(maxPages = 5): Promise<CommitSummary[]> {
+  const now = Date.now();
+  if (commitCache && now - commitCache.fetchedAt < COMMIT_CACHE_TTL) {
+    return commitCache.commits;
+  }
+
+  const all: CommitSummary[] = [];
+  for (let page = 1; page <= maxPages; page++) {
+    const url = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/commits?sha=${BRANCH}&per_page=100&page=${page}`;
+    const res = await fetch(url, { headers: headers(), cache: "no-store" });
+    if (!res.ok) break;
+    const data = (await res.json()) as Array<{
+      commit: { message: string; author: { date: string } };
+    }>;
+    if (data.length === 0) break;
+    for (const item of data) {
+      all.push({
+        message: item.commit.message,
+        date: item.commit.author.date,
+      });
+    }
+    if (data.length < 100) break;
+  }
+
+  commitCache = { commits: all, fetchedAt: now };
+  return all;
+}
+
 // --- Write operations ---
 
 export async function updateFile(

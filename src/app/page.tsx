@@ -27,10 +27,10 @@ export default async function Home() {
             home
           </Link>
           <Link
-            href="/login"
+            href="/review"
             className="text-muted hover:text-foreground transition-colors"
           >
-            review mode
+            review queue
           </Link>
           <a
             href="https://heqinghuang.com"

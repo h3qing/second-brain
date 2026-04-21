@@ -17,7 +17,6 @@ export default async function CardReview({
   }>;
 }) {
   const isLoggedIn = await verifySession();
-  if (!isLoggedIn) redirect("/login");
 
   const params = await searchParams;
   const currentPath = params.path;
@@ -125,6 +124,7 @@ export default async function CardReview({
         isReReview={isReReview}
         aiInsight={aiInsight}
         insightParagraphs={insightParagraphs}
+        isLoggedIn={isLoggedIn}
       />
 
       {/* Source Context */}
