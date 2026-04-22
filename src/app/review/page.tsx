@@ -14,20 +14,24 @@ interface QueueItem {
   reviewCount?: number;
 }
 
+interface SourceGroup {
+  source: string;
+  type: "book" | "podcast" | "concept";
+  items: QueueItem[];
+}
+
 async function getReviewItems(): Promise<{
   unreviewed: QueueItem[];
   contested: QueueItem[];
   reviewed: QueueItem[];
   dueForReview: QueueItem[];
 }> {
-  // List files from tree (1 API call)
   const [ideaPaths, conceptPaths] = await Promise.all([
     listFiles("20 Ideas"),
     listFiles("30 Concept"),
   ]);
   const allPaths = [...ideaPaths, ...conceptPaths];
 
-  // Fetch all content in parallel
   const files = await getFilesContent(allPaths);
 
   const items: QueueItem[] = [];
@@ -70,6 +74,33 @@ async function getReviewItems(): Promise<{
   };
 }
 
+function groupBySource(items: QueueItem[]): SourceGroup[] {
+  const groups = new Map<string, SourceGroup>();
+
+  for (const item of items) {
+    const key = item.source || "Concepts";
+    const type: SourceGroup["type"] =
+      item.folder === "Concepts"
+        ? "concept"
+        : item.path.includes("Podcasts/")
+          ? "podcast"
+          : "book";
+
+    if (!groups.has(key)) {
+      groups.set(key, { source: key, type, items: [] });
+    }
+    groups.get(key)!.items.push(item);
+  }
+
+  return [...groups.values()].sort((a, b) => {
+    if (a.type === "concept") return 1;
+    if (b.type === "concept") return -1;
+    if (a.type === "podcast" && b.type !== "podcast") return -1;
+    if (a.type !== "podcast" && b.type === "podcast") return 1;
+    return b.items.length - a.items.length;
+  });
+}
+
 function buildCardUrl(
   items: QueueItem[],
   index: number,
@@ -86,44 +117,6 @@ function buildCardUrl(
   return `/review/card?${params.toString()}`;
 }
 
-function ItemRow({
-  item,
-  index,
-  items,
-  mode,
-}: {
-  item: QueueItem;
-  index: number;
-  items: QueueItem[];
-  mode?: string;
-}) {
-  const href = buildCardUrl(items, index, items.length, mode);
-  return (
-    <Link
-      href={href}
-      className="block py-4 border-b border-border hover:bg-card px-2 -mx-2 rounded transition-colors"
-    >
-      <div className="flex items-baseline">
-        <span className="text-sm text-muted tabular-nums w-8 shrink-0 font-mono">
-          {index + 1}.
-        </span>
-        <span className="flex-1 font-medium tracking-tight text-base leading-snug">
-          {item.title}
-        </span>
-      </div>
-      <div className="mt-1 pl-8 text-xs text-muted">
-        <span>{item.folder}</span>
-        {item.source && (
-          <>
-            <span className="mx-1.5">&middot;</span>
-            <span>{item.source}</span>
-          </>
-        )}
-      </div>
-    </Link>
-  );
-}
-
 function Stat({ count, label }: { count: number; label: string }) {
   return (
     <div className="inline-block" style={{ marginRight: "2rem", marginBottom: "0.5rem" }}>
@@ -133,40 +126,70 @@ function Stat({ count, label }: { count: number; label: string }) {
   );
 }
 
-function Section({
+const SOURCE_ICONS: Record<string, string> = {
+  podcast: "\uD83C\uDF99",
+  book: "\uD83D\uDCD6",
+  concept: "\uD83D\uDCDD",
+};
+
+function CardSection({
   title,
-  count,
-  items,
+  groups,
+  allItems,
   mode,
   tone,
 }: {
   title: string;
-  count: number;
-  items: QueueItem[];
+  groups: SourceGroup[];
+  allItems: QueueItem[];
   mode?: string;
   tone?: "accent" | "danger" | "muted";
 }) {
+  const totalCount = groups.reduce((sum, g) => sum + g.items.length, 0);
   const toneStyle =
     tone === "danger"
       ? { color: "var(--danger)" }
       : tone === "muted"
-      ? { color: "var(--ink-muted)" }
-      : { color: "var(--ink-accent)" };
+        ? { color: "var(--ink-muted)" }
+        : { color: "var(--ink-accent)" };
+
   return (
     <section>
-      <h2 className="label mb-3" style={toneStyle}>
-        {title} ({count})
+      <h2 className="label mb-4" style={toneStyle}>
+        {title} ({totalCount})
       </h2>
-      <div>
-        {items.map((item, i) => (
-          <ItemRow
-            key={item.path}
-            item={item}
-            index={i}
-            items={items}
-            mode={mode}
-          />
-        ))}
+      <div className="rq-breakout">
+        <div className="rq-inner">
+          {groups.map((group) => (
+            <div key={group.source} className="rq-source-group">
+              <div className="rq-source-header">
+                <span>{SOURCE_ICONS[group.type] || "\uD83D\uDCD6"}</span>
+                <span className="rq-source-name">{group.source}</span>
+                <span className="rq-source-count">{group.items.length}</span>
+              </div>
+              <div className="rq-card-grid">
+                {group.items.map((item) => {
+                  const globalIndex = allItems.indexOf(item);
+                  const href = buildCardUrl(
+                    allItems,
+                    globalIndex,
+                    allItems.length,
+                    mode
+                  );
+                  return (
+                    <Link
+                      key={item.path}
+                      href={href}
+                      className={`rq-card rq-card-${group.type}`}
+                    >
+                      <span className="rq-card-title">{item.title}</span>
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     </section>
   );
@@ -222,38 +245,38 @@ export default async function ReviewQueue() {
       {isLoggedIn && <ReviewStats />}
 
       {unreviewed.length > 0 && (
-        <Section
+        <CardSection
           title="Needs Review"
-          count={unreviewed.length}
-          items={unreviewed}
+          groups={groupBySource(unreviewed)}
+          allItems={unreviewed}
           tone="accent"
         />
       )}
 
       {dueForReview.length > 0 && (
-        <Section
+        <CardSection
           title="Review Again"
-          count={dueForReview.length}
-          items={dueForReview}
+          groups={groupBySource(dueForReview)}
+          allItems={dueForReview}
           mode="rereview"
           tone="accent"
         />
       )}
 
       {contested.length > 0 && (
-        <Section
+        <CardSection
           title="Contested"
-          count={contested.length}
-          items={contested}
+          groups={groupBySource(contested)}
+          allItems={contested}
           tone="danger"
         />
       )}
 
       {reviewed.length > 0 && (
-        <Section
+        <CardSection
           title="Reviewed"
-          count={reviewed.length}
-          items={reviewed.slice(0, 10)}
+          groups={groupBySource(reviewed)}
+          allItems={reviewed}
           tone="muted"
         />
       )}
