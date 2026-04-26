@@ -96,8 +96,8 @@ Kindle / Articles / Podcasts
 ### 1. Clone and install
 
 ```bash
-git clone https://github.com/h3qing/second-brain.git
-cd second-brain
+git clone https://github.com/h3qing/building-a-second-brain.git
+cd building-a-second-brain
 npm install
 ```
 
