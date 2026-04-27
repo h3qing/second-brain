@@ -2,7 +2,7 @@
 
 A system for turning what I read into what I think -- and eventually, what I write.
 
-I read 150+ books, listen to podcasts, and collect articles. An AI pipeline extracts atomic ideas from each source, synthesizes them into cross-source concepts, and surfaces them for spaced repetition review. I review everything, edit what matters, and write from the compounded knowledge.
+I read books, listen to podcasts, and collect articles. An AI pipeline extracts atomic ideas from each source, synthesizes them into cross-source concepts, and surfaces them for spaced repetition review. I review everything, edit what matters, and write from the compounded knowledge.
 
 **Live:** [secondbrain.heqinghuang.com](https://secondbrain.heqinghuang.com)
 
@@ -11,10 +11,9 @@ I read 150+ books, listen to podcasts, and collect articles. An AI pipeline extr
 ```
  Read              Extract            Synthesize          Write
  ----              -------            ----------          -----
- 150+ Kindle  -->  127 atomic    -->  50 concept    -->  19 published
- books             ideas              pages               essays
- 3 podcasts        (AI-generated)     (cross-source)     (human voice)
- articles
+ Kindle books  -->  Atomic        -->  Concept       -->  Published
+ Podcasts           ideas              pages               essays
+ Articles           (AI-generated)     (cross-source)     (human voice)
 ```
 
 **Sources go in. Ideas come out. Concepts compound. Writing happens.**
@@ -40,7 +39,7 @@ Original essays are written in my voice, informed by the concept graph but never
 
 ## What's Extracted So Far
 
-**Books (12 of 150+):** Atomic Habits, Never Split the Difference, Getting Things Done, Good Strategy Bad Strategy, The Psychology of Money, Skin in the Game, Essentialism, Four Thousand Weeks, Who Really Matters, Cheatsheet for Life, Who - A Method for Hiring, The Cold Start Problem
+**Books:** Atomic Habits, Never Split the Difference, Getting Things Done, Good Strategy Bad Strategy, The Psychology of Money, Skin in the Game, Essentialism, Four Thousand Weeks, Who Really Matters, Cheatsheet for Life, Who - A Method for Hiring, The Cold Start Problem
 
 **Podcasts (3):** Jensen Huang on Dwarkesh Patel, Ferrari on Acquired, on Xiaoyuzhou FM
 
